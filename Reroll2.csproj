@@ -63,7 +63,8 @@
   <ItemGroup>
     <Compile Include="Source\MapComponent_RerollMapState.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Source\Patches\Scenario_GenerateIntoMap_Patch.cs" />
+    <Compile Include="Source\Patches\ActiveDropPod_PodOpen_Patch.cs" />
+    <Compile Include="Source\Patches\CaravanEnterMapUtility_Enter_Patch.cs" />
     <Compile Include="Source\RerollMapState.cs" />
     <Compile Include="Source\RerollWorldState.cs" />
     <Compile Include="Source\Reroll2Controller.cs" />

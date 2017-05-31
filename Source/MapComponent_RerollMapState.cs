@@ -17,5 +17,9 @@ namespace Reroll2 {
 			base.ExposeData();
 			Scribe_Deep.Look(ref State, "state");
 		}
+
+		public override void MapGenerated() {
+			Reroll2Controller.Instance.MapGenerated(map);
+		}
 	}
 }
