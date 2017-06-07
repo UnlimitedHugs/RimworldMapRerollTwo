@@ -11,6 +11,7 @@ using Verse;
 namespace Reroll2 {
 	public class Reroll2Controller : ModBase {
 		public static Reroll2Controller Instance { get; private set; }
+		private MapGeneratorDef lastUsedMapGenerator;
 
 		public override string ModIdentifier {
 			get { return "Reroll2"; }
@@ -25,6 +26,8 @@ namespace Reroll2 {
 			get { return _worldState ?? (_worldState = UtilityWorldObjectManager.GetUtilityWorldObject<RerollWorldState>()); }
 		}
 
+		private GeyserRerollTool geyserReroll;
+
 		private Reroll2Controller() {
 			Instance = this;
 		}
@@ -37,16 +40,29 @@ namespace Reroll2 {
 
 		public void MapGenerated(Map map) {
 			StoreGeneratedThingIdsInMapState(map);
+			GetStateForMap(map).UsedMapGenerator = lastUsedMapGenerator;
 		}
 
 		public override void MapLoaded(Map map) {
 			KillMapIntroDialog();
+			geyserReroll = new GeyserRerollTool();
 		}
 
 		public override void OnGUI() {
-			if (Widgets.ButtonText(new Rect(50f, 50f, 200f, 30f), "Reroll")) {
-				DoReroll();
+			if (Widgets.ButtonText(new Rect(50f, 50f, 200f, 30f), "Map")) {
+				DoMapReroll();
 			}
+			if (Widgets.ButtonText(new Rect(50f, 50f+30f+10f, 200f, 30f), "Geysers")) {
+				geyserReroll.DoReroll();
+			}
+		}
+
+		public override void Update() {
+			if (geyserReroll != null) geyserReroll.OnUpdate();
+		}
+
+		public override void Tick(int currentTick) {
+			if (geyserReroll != null) geyserReroll.OnTick();
 		}
 
 		public RerollMapState GetStateForMap(Map map = null) {
@@ -72,10 +88,18 @@ namespace Reroll2 {
 			state.PlayerAddedThingIds.AddRange(nonColonistThings.Select(t => t.thingIDNumber));
 		}
 
-		private void DoReroll() {
+		public void RecordUsedMapGenerator(MapGeneratorDef def) {
+			lastUsedMapGenerator = def;
+		}
+
+		private void DoMapReroll() {
 			var oldMap = Find.VisibleMap;
+			if (oldMap == null) {
+				Logger.Error("No visible map- cannot reroll");
+				return;
+			}
 			var oldParent = (MapParent) oldMap.ParentHolder;
-			var isOnStartingTile = IsOnStartingTile(oldMap, WorldState);
+			var isOnStartingTile = MapIsOnStartingTile(oldMap, WorldState);
 			var originalTile = MoveMapParentSomewhereElse(oldParent);
 
 			if (isOnStartingTile) Current.Game.InitData = MakeInitData(WorldState, oldMap);
@@ -118,10 +142,6 @@ namespace Reroll2 {
 		private IEnumerable<Thing> ResolveThingsFromIds(Map map, IEnumerable<int> thingIds) {
 			var idSet = new HashSet<int>(thingIds);
 			return map.listerThings.AllThings.Where(t => idSet.Contains(t.thingIDNumber));
-		} 
-
-		private bool MapIsOnStartingTile(Map map) {
-			return map.Tile != WorldState.StartingTile;
 		}
 
 		private IEnumerable<Thing> FilterOutThingsWithIds(IEnumerable<Thing> things, IEnumerable<int> idsToRemove) {
@@ -179,7 +199,7 @@ namespace Reroll2 {
 			};
 		}
 
-		private bool IsOnStartingTile(Map map, RerollWorldState state) {
+		private bool MapIsOnStartingTile(Map map, RerollWorldState state) {
 			var mapParent = (MapParent) map.ParentHolder;
 			if (mapParent == null) return false;
 			return mapParent.Tile == state.StartingTile;
@@ -212,29 +232,6 @@ namespace Reroll2 {
 				}
 			}
 		}
-
-		/*public HashSet<Thing> EnumerateEquipmentOnMap(Map map) {
-			var apparel = map.listerThings.ThingsInGroup(ThingRequestGroup.Apparel);
-			var weapons = map.listerThings.ThingsInGroup(ThingRequestGroup.Weapon);
-			return new HashSet<Thing>(apparel.Union(weapons));
-		}*/
-
-		/*public void DestroyEquipmentOnPawns(List<Pawn> pawns, IEnumerable<int> thingIds) {
-			var thingIdsToDetect = new HashSet<int>(thingIds);
-			foreach (var pawn in pawns) {
-				foreach (var equipment in pawn.equipment.AllEquipmentListForReading.ToArray()) {
-					if (thingIdsToDetect.Contains(equipment.thingIDNumber)) {
-						pawn.equipment.DestroyEquipment(equipment);
-					}
-				}
-				foreach (var apparel in pawn.apparel.WornApparel.ToArray()) {
-					if (thingIdsToDetect.Contains(apparel.thingIDNumber)) {
-						pawn.apparel.Remove(apparel);
-						apparel.Destroy();
-					}
-				}
-			}
-		}*/
 
 		// get all spawned and podded colonists
 		public List<Pawn> GetAllPlayerPawnsOnMap(Map map) {
@@ -284,8 +281,9 @@ namespace Reroll2 {
 		}
 
 		private void EjectThingFromContainer(Thing thing) {
-			if (thing.holdingOwner != null && !(thing.holdingOwner.Owner is Map)) {
-				thing.holdingOwner.Remove(thing);
+			var map = thing.Map;
+			if (thing.holdingOwner != null && thing.holdingOwner != map.spawnedThings) {
+				thing.holdingOwner.TryTransferToContainer(thing, map.spawnedThings);
 			}
 		}
 
