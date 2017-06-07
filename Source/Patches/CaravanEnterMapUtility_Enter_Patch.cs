@@ -11,7 +11,7 @@ namespace Reroll2.Patches {
 	public static class CaravanEnterMapUtility_Enter_Patch {
 		[HarmonyPrefix]
 		public static void RecordPlayerAddedMapThings(Caravan caravan, Map map) {
-			Reroll2Controller.Instance.RecordPlayerAddedMapThings(caravan.pawns.Owner, map);
+			RerollToolbox.RecordPlayerAddedMapThings(caravan.pawns.Owner, map);
 		}
 	}
 }

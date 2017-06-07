@@ -7,7 +7,7 @@ namespace Reroll2.Patches {
 	public class ActiveDropPod_PodOpen_Patch {
 		[HarmonyPrefix]
 		public static void RecordPodContents(ActiveDropPod __instance) {
-			Reroll2Controller.Instance.RecordPlayerAddedMapThings(__instance.Contents.ParentHolder, __instance.Map);
+			RerollToolbox.RecordPlayerAddedMapThings(__instance.Contents.ParentHolder, __instance.Map);
 		}
 	}
 }

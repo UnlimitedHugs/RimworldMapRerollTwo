@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HugsLib;
 using RimWorld;
+using RimWorld.Planet;
 using UnityEngine;
 using Verse;
 using Verse.Sound;
@@ -43,7 +44,7 @@ namespace Reroll2 {
 				logger.Error("No visible map- cannot reroll geysers");
 				return;
 			}
-			var state = Reroll2Controller.Instance.GetStateForMap(map);
+			var state = RerollToolbox.GetStateForMap(map);
 			if (state.UsedMapGenerator == null) {
 				logger.Error(string.Format("Cannot reroll geysers: map {0} does not have a recorded MapGeneratorDef", map));
 				return;
@@ -114,7 +115,8 @@ namespace Reroll2 {
 		}
 
 		private void DrawGeyserArrows(List<TimedGeyserArrow> arrows) {
-			if(Find.World == null || Find.VisibleMap == null) return;
+			// do not draw on world map
+			if (Find.World == null || Find.VisibleMap == null || Find.World.renderer.wantedMode != WorldRenderMode.None) return;
 			for (int i = 0; i < arrows.Count; i++) {
 				var arrow = arrows[i];
 				GenDraw.DrawArrowPointingAt(arrow.ArrowTarget);

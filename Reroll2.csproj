@@ -61,6 +61,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Source\RerollToolbox.cs" />
     <Compile Include="Source\Resources.cs" />
     <Compile Include="Source\GeyserRerollTool.cs" />
     <Compile Include="Source\MapComponent_RerollMapState.cs" />
