@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ThingDefs>
+
+	<ThingDef Name="BuildingMiscBase" Abstract="True">
+		<category>Building</category>
+		<soundImpactDefault>BulletImpactGround</soundImpactDefault>
+		<selectable>true</selectable>
+		<drawerType>MapMeshAndRealTime</drawerType>
+		<terrainAffordanceNeeded>Light</terrainAffordanceNeeded>
+		<leaveResourcesWhenKilled>false</leaveResourcesWhenKilled>
+		<filthLeaving>BuildingRubble</filthLeaving>
+	</ThingDef>
+
+	<ThingDef ParentName="BuildingMiscBase">
+		<DefName>RerollMonument</DefName>
+		<label>Dice of Fate</label>
+		<ThingClass>Building</ThingClass>
+		<Description>A relic of a bygone civilization, or maybe a plaything left behind by ancient and powerful beings.
+The structure hums with raw power contained within and seems to be able to bend time and space itself.
+Approach at your own risk.</Description>
+		<graphicData Class="Reroll2.GraphicData_Monument">
+			<texPath>monument_base</texPath>
+			<baseTexPath>monument_base</baseTexPath>
+			<diceTexPath>dice</diceTexPath>
+			<diceRadialTexPath>dice_radial</diceRadialTexPath>
+			<diceGlowTexPath>dice_glow</diceGlowTexPath>
+			<diceGlowRadialTexPath>dice_glow_radial</diceGlowRadialTexPath>
+			<baseShaderType>Transparent</baseShaderType>
+			<glowShaderType>TransparentPostLight</glowShaderType>
+			<baseDrawSize>(4,4)</baseDrawSize>
+			<diceDrawSize>(2,2)</diceDrawSize>
+			<drawOffset>(0, .5)</drawOffset>
+			<shadowData>
+				<volume>(.8, 1, .8)</volume>
+				<offset>(.5, 0, .5)</offset>
+			</shadowData>
+		</graphicData>
+		<drawerType>RealtimeOnly</drawerType>
+		<drawDamagedOverlay>false</drawDamagedOverlay>
+		<castEdgeShadows>false</castEdgeShadows>
+		<AltitudeLayer>Building</AltitudeLayer>
+		<fillPercent>0.5</fillPercent>
+		<coversFloor>false</coversFloor>
+		<neverMultiSelect>true</neverMultiSelect>
+		<stealable>false</stealable>
+		<holdsRoof>false</holdsRoof>
+		<iconDrawScale>2</iconDrawScale>
+		<useHitPoints>True</useHitPoints>
+		<statBases>
+			<MaxHitPoints>250</MaxHitPoints>
+			<Flammability>0</Flammability>
+			<Beauty>25</Beauty>
+		</statBases>
+		<Size>(2,2)</Size>
+		<constructEffect>ConstructDirt</constructEffect>
+		<passability>Impassable</passability>
+		<tickerType>Normal</tickerType>
+		<building>
+			<claimable>true</claimable>
+			<deconstructible>false</deconstructible>
+		</building>
+	</ThingDef>
+
+</ThingDefs>
