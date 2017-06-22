@@ -14,31 +14,31 @@
 	<ThingDef ParentName="BuildingMiscBase">
 		<DefName>RerollMonument</DefName>
 		<label>Dice of Fate</label>
-		<ThingClass>Building</ThingClass>
+		<ThingClass>Reroll2.Building_Monument</ThingClass>
 		<Description>A relic of a bygone civilization, or maybe a plaything left behind by ancient and powerful beings.
 The structure hums with raw power contained within and seems to be able to bend time and space itself.
 Approach at your own risk.</Description>
 		<graphicData Class="Reroll2.GraphicData_Monument">
-			<texPath>monument_base</texPath>
-			<baseTexPath>monument_base</baseTexPath>
+			<texPath>monumentBase</texPath>
+			<baseTexPath>monumentBase</baseTexPath>
 			<diceTexPath>dice</diceTexPath>
-			<diceRadialTexPath>dice_radial</diceRadialTexPath>
-			<diceGlowTexPath>dice_glow</diceGlowTexPath>
-			<diceGlowRadialTexPath>dice_glow_radial</diceGlowRadialTexPath>
-			<baseShaderType>Transparent</baseShaderType>
+			<diceRadialTexPath>diceRadial</diceRadialTexPath>
+			<diceGlowTexPath>diceGlow</diceGlowTexPath>
+			<diceGlowRadialTexPath>diceGlowRadial</diceGlowRadialTexPath>
+			<baseShaderType>CutoutComplex</baseShaderType>
 			<glowShaderType>TransparentPostLight</glowShaderType>
 			<baseDrawSize>(4,4)</baseDrawSize>
 			<diceDrawSize>(2,2)</diceDrawSize>
 			<drawOffset>(0, .5)</drawOffset>
 			<shadowData>
-				<volume>(.8, 1, .8)</volume>
-				<offset>(.5, 0, .5)</offset>
+				<volume>(1.8, 2, 1.8)</volume>
+				<offset>(.9, 0, .9)</offset>
 			</shadowData>
 		</graphicData>
 		<drawerType>RealtimeOnly</drawerType>
 		<drawDamagedOverlay>false</drawDamagedOverlay>
 		<castEdgeShadows>false</castEdgeShadows>
-		<AltitudeLayer>Building</AltitudeLayer>
+		<AltitudeLayer>Blueprint</AltitudeLayer>
 		<fillPercent>0.5</fillPercent>
 		<coversFloor>false</coversFloor>
 		<neverMultiSelect>true</neverMultiSelect>
@@ -47,7 +47,7 @@ Approach at your own risk.</Description>
 		<iconDrawScale>2</iconDrawScale>
 		<useHitPoints>True</useHitPoints>
 		<statBases>
-			<MaxHitPoints>250</MaxHitPoints>
+			<MaxHitPoints>800</MaxHitPoints>
 			<Flammability>0</Flammability>
 			<Beauty>25</Beauty>
 		</statBases>
@@ -55,9 +55,15 @@ Approach at your own risk.</Description>
 		<constructEffect>ConstructDirt</constructEffect>
 		<passability>Impassable</passability>
 		<tickerType>Normal</tickerType>
-		<building>
+		<building Class="Reroll2.BuildingProperties_Monument">
+			<isEdifice>true</isEdifice>
 			<claimable>true</claimable>
 			<deconstructible>false</deconstructible>
+			<preventDeterioration>true</preventDeterioration>
+			<destructionLightningStrike>true</destructionLightningStrike>
+			<destructionExplosionRadius>5</destructionExplosionRadius>
+			<destructionExplosionDamage>Flame</destructionExplosionDamage>
+			<destructionSound>RerollThunderClap</destructionSound>
 		</building>
 	</ThingDef>
 

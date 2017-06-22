@@ -10,14 +10,21 @@ namespace Reroll2 {
 	/// </summary>
 	public static class Resources {
 		[DefOf]
+		public static class Thing {
+			public static ThingDef RerollMonument;
+		}
+
+		[DefOf]
 		public static class Sound {
 			public static SoundDef RerollSteamVent;
-			public static SoundDef RerollDiceRoll;
+			public static SoundDef RerollMonumentStartup;
+			public static SoundDef RerollMonumentDrone;
 		}
 
 		[StaticConstructorOnStartup]
 		public static class Textures {
-			//public static Texture2D UI_Trigger;
+			public static Texture2D UIRerollMap;
+			public static Texture2D UIRerollGeysers;
 			
 			static Textures() {
 				foreach (var fieldInfo in typeof(Textures).GetFields(HugsLibUtility.AllBindingFlags)) {

@@ -61,8 +61,13 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Source\BuildingProperties_Monument.cs" />
+    <Compile Include="Source\Building_Monument.cs" />
     <Compile Include="Source\GraphicData_Monument.cs" />
     <Compile Include="Source\Graphic_Monument.cs" />
+    <Compile Include="Source\GenStep_Monument.cs" />
+    <Compile Include="Source\ValueInterpolator.cs" />
+    <Compile Include="Source\InterpolationCurves.cs" />
     <Compile Include="Source\RerollToolbox.cs" />
     <Compile Include="Source\Resources.cs" />
     <Compile Include="Source\GeyserRerollTool.cs" />

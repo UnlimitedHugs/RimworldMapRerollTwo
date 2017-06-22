@@ -243,5 +243,14 @@ namespace Reroll2 {
 			var idSet = new HashSet<int>(idsToRemove);
 			return things.Where(t => !idSet.Contains(t.thingIDNumber));
 		}
+
+		public static void TrySelectMonument(Map map) {
+			if (map.listerBuildings == null) return;
+			var monument = map.listerThings.ThingsOfDef(Resources.Thing.RerollMonument).FirstOrDefault();
+			if (monument != null) {
+				Find.Selector.ClearSelection();
+				Find.Selector.Select(monument, false);
+			}
+		}
 	}
 }
