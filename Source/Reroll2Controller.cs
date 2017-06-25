@@ -29,6 +29,10 @@ namespace Reroll2 {
 			Instance = this;
 		}
 
+		public override void Initialize() {
+			ReflectionCache.PrepareReflection();
+		}
+
 		public override void MapComponentsInitializing(Map map) {
 			if (Find.GameInitData != null) {
 				WorldState.StartingTile = Find.GameInitData.startingTile;
@@ -44,8 +48,8 @@ namespace Reroll2 {
 			geyserReroll = new GeyserRerollTool();
 			if (RerollToolbox.GetStateForMap(map).RerollGenerated && rerollInProgress) {
 				rerollInProgress = false;
+				RerollToolbox.SendMapRerolledEventToThings(map);
 				RerollToolbox.KillMapIntroDialog();
-				RerollToolbox.TrySelectMonument(map);
 			}
 		}
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using HugsLib;
+using HugsLib.Utils;
 using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;
@@ -56,7 +57,6 @@ namespace Reroll2 {
 				logger.Error(string.Format("Cannot reroll geysers: map generator {0} does not have a geyser GenStep", state.UsedMapGenerator));
 				return;
 			}
-			RerollInProgress = true;
 			drawnArrows.Clear();
 			activeSteamEffects.Clear();
 			var geysersOnMap = map.listerThings.AllThings.Where(t => t.def == geyserDef);
@@ -75,6 +75,9 @@ namespace Reroll2 {
 			}
 			var allowReduction = AllowGeyserCountReduction && oldGeysersQueue.Count > 1; // make sure we have at least one geyser on the map, even if we don't spawn new ones
 			var numSpawnOperations = Math.Max(oldGeysersQueue.Count, newGeysersQueue.Count);
+			if (numSpawnOperations > 0) {
+				RerollInProgress = true;
+			}
 			for (int i = 1; i <= numSpawnOperations; i++) {
 				var operationIndex = i;
 				HugsLibController.Instance.CallbackScheduler.ScheduleCallback(() => {
@@ -107,7 +110,7 @@ namespace Reroll2 {
 		}
 
 		private void AddArrowDrawerFor(Thing t) {
-			drawnArrows.Add(new TimedGeyserArrow(t.Position.ToVector3(), Find.TickManager.TicksAbs + ArrowPointingDurationTicks));
+			drawnArrows.Add(new TimedGeyserArrow(t.TrueCenter(), Find.TickManager.TicksAbs + ArrowPointingDurationTicks));
 		}
 
 		private void AddSteamEffectFor(Thing t) {
@@ -116,12 +119,13 @@ namespace Reroll2 {
 
 		private void DrawGeyserArrows(List<TimedGeyserArrow> arrows) {
 			// do not draw on world map
-			if (Find.World == null || Find.VisibleMap == null || Find.World.renderer.wantedMode != WorldRenderMode.None) return;
+			if (Find.World == null || Find.VisibleMap == null || Find.World.renderer == null || Find.World.renderer.wantedMode != WorldRenderMode.None) return;
 			for (int i = 0; i < arrows.Count; i++) {
 				var arrow = arrows[i];
 				GenDraw.DrawArrowPointingAt(arrow.ArrowTarget);
 			}
-			arrows.RemoveAll(a => Find.TickManager.TicksAbs > a.ExpireTick);
+			var currentTick = Find.TickManager != null ? Find.TickManager.TicksAbs : 0;
+			arrows.RemoveAll(a => currentTick > a.ExpireTick);
 		}
 
 		private void DrawSteamEffects(List<TimedSteamEffect> effects) {

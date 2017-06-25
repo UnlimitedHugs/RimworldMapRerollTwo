@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using HugsLib.Utils;
 using RimWorld;
 using UnityEngine;
 using Verse;
 using Verse.Sound;
 
 namespace Reroll2 {
-	public class Building_Monument : Building {
+	public class Building_Monument : Building, IRerollEventReceiver {
 		private const float MaxSpeed = 360f*4f;
 		private const float MinSpeed = 15f;
 		private const float MinGlow = .5f;
@@ -43,17 +44,27 @@ namespace Reroll2 {
 		}
 
 		private bool OperationInProgress {
-			get { return pendingOperation != PendingOperationType.None || !speedInterpolator.finished; }
+			get { return pendingOperation != PendingOperationType.None; }
 		}
 
 		private ValueInterpolator speedInterpolator;
 		private PendingOperationType pendingOperation;
 		private Sustainer droneSustainer;
-		
+		private bool isActive;
+
+		public void OnMapRerolled() {
+			Find.Selector.ClearSelection();
+			Find.Selector.Select(this, false);
+			isActive = true;
+			SetFaction(Faction.OfPlayer);
+			SpinDown();
+		}
+
 		public override void ExposeData() {
 			base.ExposeData();
 			Scribe_Deep.Look(ref speedInterpolator, "speedInterpolator");
 			Scribe_Values.Look(ref pendingOperation, "pendingOperation", PendingOperationType.None);
+			Scribe_Values.Look(ref isActive, "isActive", false);
 		}
 
 		public override void SpawnSetup(Map map, bool respawningAfterLoad) {
@@ -65,41 +76,56 @@ namespace Reroll2 {
 			if (!respawningAfterLoad) {
 				SpinDown();
 			}
-			var droneInfo = SoundInfo.InMap(this, MaintenanceType.PerTick);
-			//droneSustainer = Resources.Sound.RerollMonumentDrone.TrySpawnSustainer(droneInfo);
 			if (Props == null) {
 				Reroll2Controller.Instance.Logger.Error("Building_Monument requires a BuildingProperties_Monument");
 				Destroy();
 			}
+			LongEventHandler.ExecuteWhenFinished(delegate {
+				var droneInfo = SoundInfo.InMap(this, MaintenanceType.None);
+				droneSustainer = Resources.Sound.RerollMonumentDrone.TrySpawnSustainer(droneInfo);
+				if (droneSustainer != null) {
+					SetSustainerVolume(droneSustainer, 0);
+				}
+			});
 		}
 
 		public override void SetFaction(Faction newFaction, Pawn recruiter = null) {
 			var oldFaction = factionInt;
 			base.SetFaction(newFaction, recruiter);
-			if (oldFaction != newFaction && newFaction.IsPlayer) {
+			if (!isActive && oldFaction != newFaction && newFaction.IsPlayer) {
+				isActive = true;
+				speedInterpolator.value = 0;
+				SpinUp();
+				pendingOperation = PendingOperationType.None;
 				Resources.Sound.RerollMonumentStartup.PlayOneShot(this);
 			}
 		}
 
-		public override void Tick() {
+		/*public override void Tick() {
 			base.Tick();
 			if (droneSustainer != null) {
 				droneSustainer.Maintain();
 			}
-		}
+		}*/
 
 		public override void Draw() {
 			if (!Find.TickManager.Paused) {
-				var rotationSpeed = speedInterpolator.Update();
-				DiceRotation = (DiceRotation + rotationSpeed * Time.deltaTime)%360;
-				var proportionalRotationSpeed = Mathf.Clamp01((rotationSpeed - MinSpeed)/(MaxSpeed - MinSpeed));
-				RadialAlpha = proportionalRotationSpeed;
-				GlowColorHue = (GlowColorHue + Mathf.Lerp(HueIncrementPerSecondSlow, HueIncrementPerSecondFast, proportionalRotationSpeed) * Time.deltaTime) % 1f;
-				GlowAlpha = MinGlow + proportionalRotationSpeed * (1f-MinGlow);
-				GlowColorSaturation = proportionalRotationSpeed / 2f + .5f;
-				Find.CameraDriver.shaker.DoShake(proportionalRotationSpeed * ScreenShakeMultiplier * Time.deltaTime);
-				if (droneSustainer != null) {
-					droneSustainer.info.volumeFactor = proportionalRotationSpeed;
+				if (isActive) {
+					var rotationSpeed = speedInterpolator.Update();
+					DiceRotation = (DiceRotation + rotationSpeed * Time.deltaTime) % 360;
+					var proportionalRotationSpeed = Mathf.Clamp01((rotationSpeed - MinSpeed) / (MaxSpeed - MinSpeed));
+					RadialAlpha = proportionalRotationSpeed;
+					GlowColorHue = (GlowColorHue + Mathf.Lerp(HueIncrementPerSecondSlow, HueIncrementPerSecondFast, proportionalRotationSpeed) * Time.deltaTime) % 1f;
+					GlowAlpha = MinGlow + proportionalRotationSpeed * (1f - MinGlow);
+					GlowColorSaturation = proportionalRotationSpeed / 2f + .5f;
+					Find.CameraDriver.shaker.DoShake(proportionalRotationSpeed * ScreenShakeMultiplier * Time.deltaTime);
+					if (droneSustainer != null && !speedInterpolator.finished) {
+						SetSustainerVolume(droneSustainer, proportionalRotationSpeed);
+					}
+				} else {
+					DiceRotation = 0;
+					RadialAlpha = 0;
+					GlowAlpha = 0;
 				}
 			}
 			base.Draw();
@@ -117,29 +143,38 @@ namespace Reroll2 {
 					Props.destructionSound.PlayOneShotOnCamera(Map);
 				}
 			}
+			EndSustainer();
 			base.Destroy(mode);
+		}
+
+		private void EndSustainer() {
+			if (droneSustainer != null && !droneSustainer.Ended) {
+				droneSustainer.End();
+			}
 		}
 
 		public override IEnumerable<Gizmo> GetGizmos() {
 			foreach (var gizmo in base.GetGizmos()) {
 				yield return gizmo;
 			}
-			var controlsDisabled = OperationInProgress || Reroll2Controller.Instance.GeyserRerollInProgress;
-			var disabledReason = controlsDisabled ? "Reroll2_rerollInProgress".Translate() : null;
-			yield return new Command_Action {
-				defaultLabel = "Reroll2_rerollMap".Translate(),
-				disabled = controlsDisabled,
-				disabledReason = disabledReason,
-				icon = Resources.Textures.UIRerollMap,
-				action = RerollMapAction
-			};
-			yield return new Command_Action {
-				defaultLabel = "Reroll2_rerollGeysers".Translate(),
-				disabled = controlsDisabled,
-				disabledReason = disabledReason,
-				icon = Resources.Textures.UIRerollGeysers,
-				action = RerollGeysersAction
-			};
+			if (isActive) {
+				var controlsDisabled = OperationInProgress || Reroll2Controller.Instance.GeyserRerollInProgress;
+				var disabledReason = controlsDisabled ? "Reroll2_rerollInProgress".Translate() : null;
+				yield return new Command_Action {
+					defaultLabel = "Reroll2_rerollMap".Translate(),
+					disabled = controlsDisabled,
+					disabledReason = disabledReason,
+					icon = Resources.Textures.UIRerollMap,
+					action = RerollMapAction
+				};
+				yield return new Command_Action {
+					defaultLabel = "Reroll2_rerollGeysers".Translate(),
+					disabled = controlsDisabled,
+					disabledReason = disabledReason,
+					icon = Resources.Textures.UIRerollGeysers,
+					action = RerollGeysersAction
+				};
+			}
 		}
 
 		private void RerollMapAction() {
@@ -155,6 +190,7 @@ namespace Reroll2 {
 		private void OnSpeedInterpolationFinsihed(ValueInterpolator interpolator, float finalvalue, float interpolationduration, InterpolationCurves.Curve interpolationcurve) {
 			switch (pendingOperation) {
 				case PendingOperationType.MapReroll:
+					EndSustainer();
 					Reroll2Controller.Instance.RerollMap();
 					break;
 				case PendingOperationType.GeyserReroll:
@@ -167,6 +203,9 @@ namespace Reroll2 {
 					throw new ArgumentOutOfRangeException();
 			}
 			pendingOperation = PendingOperationType.None;
+			if (finalvalue == MaxSpeed) {
+				SpinDown();
+			}
 		}
 
 		private void SpinUp() {
@@ -174,7 +213,22 @@ namespace Reroll2 {
 		}
 
 		private void SpinDown() {
+			speedInterpolator.value = MaxSpeed;
 			speedInterpolator.StartInterpolation(MinSpeed, SpeedTransitionDuration, InterpolationCurves.CubicEaseInOut);
+		}
+
+		private void SetSustainerVolume(Sustainer sus, float volume) {
+			var subSustainers = (List<SubSustainer>)ReflectionCache.Sustainer_SubSustainers.GetValue(sus);
+			if (subSustainers == null) return;
+			for (var i = 0; i < subSustainers.Count; i++) {
+				var sub = subSustainers[i];
+				var samples = (List<SampleSustainer>)ReflectionCache.SubSustainer_Samples.GetValue(sub);
+				if (samples == null) continue;
+				for (var j = 0; j < samples.Count; j++) {
+					var sample = samples[j];
+					sample.resolvedVolume = volume;
+				}
+			}
 		}
 
 		public override string GetInspectString() {

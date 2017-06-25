@@ -83,9 +83,11 @@
 	<SoundDef>
 		<defName>RerollMonumentDrone</defName>  
 		<eventNames />	
-		<maxVoices>1</maxVoices>   
-		<maxSimultaneous>1</maxSimultaneous> 
+		<maxVoices>4</maxVoices>   
+		<maxSimultaneous>4</maxSimultaneous> 
 		<sustain>true</sustain>
+		<context>MapOnly</context>
+		<priorityMode>PrioritizeNearest</priorityMode> 
 		<subSounds>
 			<li>
 				<onCamera>False</onCamera>  
@@ -94,9 +96,10 @@
 						<clipPath>monumentDroneLoop</clipPath>
 					</li>
 				</grains>	  
+				<muteWhenPaused>true</muteWhenPaused>
 				<volumeRange>
-					<min>800</min>
-					<max>800</max>
+					<min>1000</min>
+					<max>1000</max>
 				</volumeRange>
 				<pitchRange>
 					<min>1</min>		

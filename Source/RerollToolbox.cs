@@ -244,12 +244,14 @@ namespace Reroll2 {
 			return things.Where(t => !idSet.Contains(t.thingIDNumber));
 		}
 
-		public static void TrySelectMonument(Map map) {
+		public static void SendMapRerolledEventToThings(Map map) {
 			if (map.listerBuildings == null) return;
-			var monument = map.listerThings.ThingsOfDef(Resources.Thing.RerollMonument).FirstOrDefault();
-			if (monument != null) {
-				Find.Selector.ClearSelection();
-				Find.Selector.Select(monument, false);
+			var allThings = map.listerThings.AllThings;
+			for (var i = 0; i < allThings.Count; i++) {
+				var receiver = allThings[i] as IRerollEventReceiver;
+				if (receiver != null) {
+					receiver.OnMapRerolled();
+				}
 			}
 		}
 	}
