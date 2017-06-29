@@ -30,6 +30,7 @@ namespace Reroll2 {
 		}
 
 		public SettingHandle<bool> PaidRerollsSetting { get; private set; }
+		public SettingHandle<bool> DeterministicRerollsSetting { get; private set; }
 		public SettingHandle<bool> LogConsumedResourcesSetting { get; private set; }
 		public SettingHandle<bool> NoVomitingSetting { get; private set; }
 		
@@ -124,6 +125,8 @@ namespace Reroll2 {
 			SettingHandle.ShouldDisplay devModeVisible = () => Prefs.DevMode;
 
 			PaidRerollsSetting = Settings.GetHandle("paidRerolls", "setting_paidRerolls_label".Translate(), "setting_paidRerolls_desc".Translate(), true);
+			
+			DeterministicRerollsSetting = Settings.GetHandle("deterministicRerolls", "setting_deterministicRerolls_label".Translate(), "setting_deterministicRerolls_desc".Translate(), true);
 			
 			LogConsumedResourcesSetting = Settings.GetHandle("logConsumption", "setting_logConsumption_label".Translate(), "setting_logConsumption_desc".Translate(), false);
 			LogConsumedResourcesSetting.VisibilityPredicate = devModeVisible;

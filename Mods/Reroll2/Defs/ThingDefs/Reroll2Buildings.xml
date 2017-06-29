@@ -25,7 +25,7 @@ Approach at your own risk.</Description>
 			<diceRadialTexPath>diceRadial</diceRadialTexPath>
 			<diceGlowTexPath>diceGlow</diceGlowTexPath>
 			<diceGlowRadialTexPath>diceGlowRadial</diceGlowRadialTexPath>
-			<baseShaderType>CutoutComplex</baseShaderType>
+			<baseShaderType>Transparent</baseShaderType>
 			<diceShaderType>Transparent</diceShaderType>
 			<glowShaderType>TransparentPostLight</glowShaderType>
 			<baseDrawSize>(4,4)</baseDrawSize>

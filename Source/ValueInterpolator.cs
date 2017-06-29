@@ -39,6 +39,7 @@ namespace Reroll2 {
 		}
 
 		public void ExposeData() {
+			Scribe_Values.Look(ref value, "value", 0f);
 			Scribe_Values.Look(ref finished, "finished", true);
 			Scribe_Values.Look(ref respectTimeScale, "respectTimeScale", true);
 			Scribe_Values.Look(ref elapsedTime, "elapsedTime", 0);

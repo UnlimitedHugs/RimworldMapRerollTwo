@@ -77,9 +77,6 @@ namespace Reroll2 {
 				speedInterpolator = new ValueInterpolator(MinSpeed);
 			}
 			speedInterpolator.SetFinishedCallback(OnSpeedInterpolationFinsihed);
-			if (!respawningAfterLoad) {
-				SpinDown();
-			}
 			if (Props == null) {
 				Reroll2Controller.Instance.Logger.Error("Building_Monument requires a BuildingProperties_Monument");
 				Destroy();

@@ -40,7 +40,8 @@ namespace Reroll2 {
 				DespawnThings(nonGeneratedThings, oldMap);
 
 				var newParent = PlaceNewMapParent(originalTile);
-				var mapSeed = Rand.Int.ToString();
+				var previousSeed = oldMapState.RerollSeed ?? Find.World.info.seedString + originalTile;
+				var mapSeed = Reroll2Controller.Instance.DeterministicRerollsSetting ? GenerateNewRerollSeed(previousSeed) : Rand.Int.ToString();
 				var newMap = GenerateNewMapWithSeed(newParent, oldMap.Size, mapSeed);
 				SwitchToMap(newMap);
 				if (isOnStartingTile) {
@@ -52,6 +53,7 @@ namespace Reroll2 {
 				newMapState.RerollGenerated = true;
 				newMapState.PlayerAddedThingIds = oldMapState.PlayerAddedThingIds;
 				newMapState.ResourceBalance = oldMapState.ResourceBalance;
+				newMapState.RerollSeed = mapSeed;
 				SendMapStateSetEventToThings(newMap);
 
 				if (!isOnStartingTile) {
@@ -354,6 +356,13 @@ namespace Reroll2 {
 				if (receiver != null) {
 					yield return receiver;
 				}
+			}
+		}
+
+		private static string GenerateNewRerollSeed(string previousSeed) {
+			const int magicNumber = 3;
+			unchecked {
+				return ((previousSeed.GetHashCode() << 1) * magicNumber).ToString();
 			}
 		}
 

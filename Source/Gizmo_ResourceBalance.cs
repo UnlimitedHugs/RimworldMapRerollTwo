@@ -30,7 +30,7 @@ namespace Reroll2 {
 				var rect2 = rect;
 				rect2.height = overRect.height / 2f;
 				Text.Font = GameFont.Tiny;
-				Widgets.Label(rect2, "Reroll2_remainingResource".Translate());
+				Widgets.Label(rect2, "Reroll2_remainingResources".Translate());
 				var rect3 = rect;
 				rect3.yMin = overRect.height / 2f;
 				float fillPercent = Mathf.Clamp(interpolator.value, 0, Reroll2Controller.MaxResourceBalance);
