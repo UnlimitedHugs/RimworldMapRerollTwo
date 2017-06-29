@@ -28,11 +28,14 @@ namespace Reroll2 {
 
 		[StaticConstructorOnStartup]
 		public static class Textures {
+			public static readonly Texture2D ResourceBarFull = SolidColorMaterials.NewSolidColorTexture(new Color(0.2f, 0.2f, 0.24f));
+			public static readonly Texture2D ResourceBarEmpty = SolidColorMaterials.NewSolidColorTexture(Color.clear);
 			public static Texture2D UIRerollMap;
 			public static Texture2D UIRerollGeysers;
-			
+
 			static Textures() {
 				foreach (var fieldInfo in typeof(Textures).GetFields(HugsLibUtility.AllBindingFlags)) {
+					if(fieldInfo.IsInitOnly) continue;
 					fieldInfo.SetValue(null, ContentFinder<Texture2D>.Get(fieldInfo.Name));
 				}
 			}

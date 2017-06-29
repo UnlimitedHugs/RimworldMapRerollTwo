@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using HugsLib.Utils;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -50,6 +49,7 @@ namespace Reroll2 {
 		private ValueInterpolator speedInterpolator;
 		private PendingOperationType pendingOperation;
 		private Sustainer droneSustainer;
+		private Gizmo_ResourceBalance resourceBalanceGizmo;
 		private bool isActive;
 
 		public void OnMapRerolled() {
@@ -58,6 +58,10 @@ namespace Reroll2 {
 			isActive = true;
 			SetFaction(Faction.OfPlayer);
 			SpinDown();
+		}
+
+		public void OnMapStateSet() {
+			resourceBalanceGizmo = new Gizmo_ResourceBalance(Map);
 		}
 
 		public override void ExposeData() {
@@ -88,7 +92,7 @@ namespace Reroll2 {
 				}
 			});
 		}
-
+		
 		public override void SetFaction(Faction newFaction, Pawn recruiter = null) {
 			var oldFaction = factionInt;
 			base.SetFaction(newFaction, recruiter);
@@ -96,6 +100,7 @@ namespace Reroll2 {
 				isActive = true;
 				speedInterpolator.value = 0;
 				SpinUp();
+				resourceBalanceGizmo = new Gizmo_ResourceBalance(Map, 0);
 				pendingOperation = PendingOperationType.None;
 				Resources.Sound.RerollMonumentStartup.PlayOneShot(this);
 			}
@@ -170,6 +175,9 @@ namespace Reroll2 {
 					icon = Resources.Textures.UIRerollGeysers,
 					action = RerollGeysersAction
 				};
+				if (Reroll2Controller.Instance.PaidRerollsSetting && resourceBalanceGizmo != null) {
+					yield return resourceBalanceGizmo;
+				}
 			}
 		}
 

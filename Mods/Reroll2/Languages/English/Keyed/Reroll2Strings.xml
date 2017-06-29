@@ -5,7 +5,8 @@
 	<Reroll2_rerollGeysers>Reroll Geysers</Reroll2_rerollGeysers>
 	<Reroll2_rerollInProgress>Reroll in progress</Reroll2_rerollInProgress>
 	
-	<Reroll2_cannotAfford>Cannot afford operation</Reroll2_cannotAfford>
+	<Reroll2_remainingResource>Remaining map resources</Reroll2_remainingResource>
+	<Reroll2_cannotAfford>Cannot afford operation.</Reroll2_cannotAfford>
 
 	<setting_paidRerolls_label>Rerolls cost resources</setting_paidRerolls_label>
 	<setting_paidRerolls_desc>When enabled, rerolling maps and geysers will cost unmined resources from the map.</setting_paidRerolls_desc>

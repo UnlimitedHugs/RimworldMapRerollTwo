@@ -1,7 +1,6 @@
 ﻿using HugsLib;
 using HugsLib.Settings;
 using HugsLib.Utils;
-using UnityEngine;
 using Verse;
 
 namespace Reroll2 {
@@ -62,6 +61,7 @@ namespace Reroll2 {
 			var mapState = RerollToolbox.GetStateForMap(map);
 			if (!mapState.RerollGenerated || !PaidRerollsSetting) {
 				mapState.ResourceBalance = MaxResourceBalance;
+				RerollToolbox.SendMapStateSetEventToThings(map);
 			}
 			
 			RerollToolbox.TryStopPawnVomiting(map);

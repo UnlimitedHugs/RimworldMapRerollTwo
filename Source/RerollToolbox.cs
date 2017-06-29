@@ -52,6 +52,7 @@ namespace Reroll2 {
 				newMapState.RerollGenerated = true;
 				newMapState.PlayerAddedThingIds = oldMapState.PlayerAddedThingIds;
 				newMapState.ResourceBalance = oldMapState.ResourceBalance;
+				SendMapStateSetEventToThings(newMap);
 
 				if (!isOnStartingTile) {
 					SpawnPawnsOnMap(playerPawns, newMap);
@@ -345,14 +346,26 @@ namespace Reroll2 {
 			return things.Where(t => !idSet.Contains(t.thingIDNumber));
 		}
 
-		public static void SendMapRerolledEventToThings(Map map) {
-			if (map.listerBuildings == null) return;
+		private static IEnumerable<IRerollEventReceiver> EnumerateRerollEventReceivers(Map map) {
+			if (map.listerBuildings == null) yield break;
 			var allThings = map.listerThings.AllThings;
 			for (var i = 0; i < allThings.Count; i++) {
 				var receiver = allThings[i] as IRerollEventReceiver;
 				if (receiver != null) {
-					receiver.OnMapRerolled();
+					yield return receiver;
 				}
+			}
+		}
+
+		public static void SendMapRerolledEventToThings(Map map) {
+			foreach (var receiver in EnumerateRerollEventReceivers(map)) {
+				receiver.OnMapRerolled();
+			}
+		}
+
+		public static void SendMapStateSetEventToThings(Map map) {
+			foreach (var receiver in EnumerateRerollEventReceivers(map)) {
+				receiver.OnMapStateSet();
 			}
 		}
 	}

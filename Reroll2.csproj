@@ -63,6 +63,7 @@
   <ItemGroup>
     <Compile Include="Source\BuildingProperties_Monument.cs" />
     <Compile Include="Source\Building_Monument.cs" />
+    <Compile Include="Source\Gizmo_ResourceBalance.cs" />
     <Compile Include="Source\GraphicData_Monument.cs" />
     <Compile Include="Source\Graphic_Monument.cs" />
     <Compile Include="Source\GenStep_Monument.cs" />
