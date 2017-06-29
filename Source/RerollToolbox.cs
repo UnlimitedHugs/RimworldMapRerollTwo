@@ -39,6 +39,8 @@ namespace Reroll2 {
 				DespawnThings(playerPawns.OfType<Thing>(), oldMap);
 				DespawnThings(nonGeneratedThings, oldMap);
 
+				ResetIncidentScenarioParts(Find.Scenario);
+
 				var newParent = PlaceNewMapParent(originalTile);
 				var previousSeed = oldMapState.RerollSeed ?? Find.World.info.seedString + originalTile;
 				var mapSeed = Reroll2Controller.Instance.DeterministicRerollsSetting ? GenerateNewRerollSeed(previousSeed) : Rand.Int.ToString();
@@ -191,6 +193,14 @@ namespace Reroll2 {
 			map.listerBuildings.Remove((Building)res);
 			map.listerBuildingsRepairable.Notify_BuildingDeSpawned(b);
 			map.designationManager.Notify_BuildingDespawned(b);
+		}
+
+		public static void ResetIncidentScenarioParts(Scenario scenario) {
+			foreach (var part in scenario.AllParts) {
+				if (part != null && part.GetType() == ReflectionCache.ScenPartCreateIncidentType) {
+					ReflectionCache.CreateIncident_IsFinished.SetValue(part, false);
+				}
+			}
 		}
 
 		private static void DestroyThingsInWorldById(IEnumerable<int> idsToDestroy) {
