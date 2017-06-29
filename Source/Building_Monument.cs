@@ -81,8 +81,8 @@ namespace Reroll2 {
 				Destroy();
 			}
 			LongEventHandler.ExecuteWhenFinished(delegate {
-				var droneInfo = SoundInfo.InMap(this, MaintenanceType.None);
-				droneSustainer = Resources.Sound.RerollMonumentDrone.TrySpawnSustainer(droneInfo);
+				//var droneInfo = SoundInfo.InMap(this);
+				//droneSustainer = Resources.Sound.RerollMonumentDrone.TrySpawnSustainer(droneInfo);
 				if (droneSustainer != null) {
 					SetSustainerVolume(droneSustainer, 0);
 				}
@@ -101,13 +101,6 @@ namespace Reroll2 {
 			}
 		}
 
-		/*public override void Tick() {
-			base.Tick();
-			if (droneSustainer != null) {
-				droneSustainer.Maintain();
-			}
-		}*/
-
 		public override void Draw() {
 			if (!Find.TickManager.Paused) {
 				if (isActive) {
@@ -118,6 +111,9 @@ namespace Reroll2 {
 					GlowColorHue = (GlowColorHue + Mathf.Lerp(HueIncrementPerSecondSlow, HueIncrementPerSecondFast, proportionalRotationSpeed) * Time.deltaTime) % 1f;
 					GlowAlpha = MinGlow + proportionalRotationSpeed * (1f - MinGlow);
 					GlowColorSaturation = proportionalRotationSpeed / 2f + .5f;
+					if (!Reroll2Controller.Instance.PaidRerollsSetting) {
+						GlowColorSaturation = 0;
+					}
 					Find.CameraDriver.shaker.DoShake(proportionalRotationSpeed * ScreenShakeMultiplier * Time.deltaTime);
 					if (droneSustainer != null && !speedInterpolator.finished) {
 						SetSustainerVolume(droneSustainer, proportionalRotationSpeed);
@@ -178,13 +174,26 @@ namespace Reroll2 {
 		}
 
 		private void RerollMapAction() {
-			pendingOperation = PendingOperationType.MapReroll;
-			SpinUp();
+			if (HasSufficientBalance(Reroll2Controller.MapRerollType.Map)) {
+				pendingOperation = PendingOperationType.MapReroll;
+				SpinUp();
+			}
 		}
 
 		private void RerollGeysersAction() {
-			pendingOperation = PendingOperationType.GeyserReroll;
-			SpinUp();
+			if (HasSufficientBalance(Reroll2Controller.MapRerollType.Geyser)) {
+				pendingOperation = PendingOperationType.GeyserReroll;
+				SpinUp();
+			}
+		}
+
+		private bool HasSufficientBalance(Reroll2Controller.MapRerollType rerollType) {
+			if (Reroll2Controller.Instance.CanAffordOperation(rerollType)) {
+				return true;
+			} else {
+				Messages.Message("Reroll2_cannotAfford".Translate(), MessageSound.RejectInput);
+			}
+			return false;
 		}
 
 		private void OnSpeedInterpolationFinsihed(ValueInterpolator interpolator, float finalvalue, float interpolationduration, InterpolationCurves.Curve interpolationcurve) {

@@ -1,10 +1,17 @@
 ﻿using HugsLib;
+using HugsLib.Settings;
 using HugsLib.Utils;
 using UnityEngine;
 using Verse;
 
 namespace Reroll2 {
 	public class Reroll2Controller : ModBase {
+		internal const float MaxResourceBalance = 100f;
+
+		public enum MapRerollType {
+			Map, Geyser
+		}
+
 		public static Reroll2Controller Instance { get; private set; }
 		private MapGeneratorDef lastUsedMapGenerator;
 		private bool rerollInProgress;
@@ -23,6 +30,10 @@ namespace Reroll2 {
 			get { return _worldState ?? (_worldState = UtilityWorldObjectManager.GetUtilityWorldObject<RerollWorldState>()); }
 		}
 
+		public SettingHandle<bool> PaidRerollsSetting { get; private set; }
+		public SettingHandle<bool> LogConsumedResourcesSetting { get; private set; }
+		public SettingHandle<bool> NoVomitingSetting { get; private set; }
+		
 		private GeyserRerollTool geyserReroll;
 
 		private Reroll2Controller() {
@@ -31,6 +42,7 @@ namespace Reroll2 {
 
 		public override void Initialize() {
 			ReflectionCache.PrepareReflection();
+			PrepareSettingsHandles();
 		}
 
 		public override void MapComponentsInitializing(Map map) {
@@ -41,24 +53,28 @@ namespace Reroll2 {
 
 		public override void MapGenerated(Map map) {
 			RerollToolbox.StoreGeneratedThingIdsInMapState(map);
-			RerollToolbox.GetStateForMap(map).UsedMapGenerator = lastUsedMapGenerator;
+			var mapState = RerollToolbox.GetStateForMap(map);
+			mapState.UsedMapGenerator = lastUsedMapGenerator;
 		}
 
 		public override void MapLoaded(Map map) {
 			geyserReroll = new GeyserRerollTool();
-			if (RerollToolbox.GetStateForMap(map).RerollGenerated && rerollInProgress) {
+			var mapState = RerollToolbox.GetStateForMap(map);
+			if (!mapState.RerollGenerated || !PaidRerollsSetting) {
+				mapState.ResourceBalance = MaxResourceBalance;
+			}
+			
+			RerollToolbox.TryStopPawnVomiting(map);
+
+			if (mapState.RerollGenerated && rerollInProgress) {
 				rerollInProgress = false;
 				RerollToolbox.SendMapRerolledEventToThings(map);
 				RerollToolbox.KillMapIntroDialog();
-			}
-		}
-
-		public override void OnGUI() {
-			if (Widgets.ButtonText(new Rect(50f, 50f, 200f, 30f), "Map")) {
-				RerollToolbox.DoMapReroll();
-			}
-			if (Widgets.ButtonText(new Rect(50f, 50f+30f+10f, 200f, 30f), "Geysers")) {
-				geyserReroll.DoReroll();
+				if (PaidRerollsSetting) {
+					// adjust map to current remaining resources and charge for the reroll
+					RerollToolbox.ReduceMapResources(map, 100 - mapState.ResourceBalance, 100);
+					RerollToolbox.SubtractResourcePercentage(map, Resources.Settings.MapRerollSettings.mapRerollCost);
+				}
 			}
 		}
 
@@ -73,6 +89,19 @@ namespace Reroll2 {
 
 		public void RerollGeysers() {
 			geyserReroll.DoReroll();
+			if (PaidRerollsSetting) {
+				RerollToolbox.SubtractResourcePercentage(Find.VisibleMap, Resources.Settings.MapRerollSettings.geyserRerollCost);
+			}
+		}
+
+		public bool CanAffordOperation(MapRerollType type) {
+			float cost = 0;
+			switch (type) {
+				case MapRerollType.Map: cost = Resources.Settings.MapRerollSettings.mapRerollCost; break;
+				case MapRerollType.Geyser: cost = Resources.Settings.MapRerollSettings.geyserRerollCost; break;
+			}
+			var mapState = RerollToolbox.GetStateForMap();
+			return !PaidRerollsSetting || mapState.ResourceBalance >= cost;
 		}
 
 		public bool GeyserRerollInProgress {
@@ -89,6 +118,18 @@ namespace Reroll2 {
 
 		public void RecordUsedMapGenerator(MapGeneratorDef def) {
 			lastUsedMapGenerator = def;
+		}
+
+		private void PrepareSettingsHandles() {
+			SettingHandle.ShouldDisplay devModeVisible = () => Prefs.DevMode;
+
+			PaidRerollsSetting = Settings.GetHandle("paidRerolls", "setting_paidRerolls_label".Translate(), "setting_paidRerolls_desc".Translate(), true);
+			
+			LogConsumedResourcesSetting = Settings.GetHandle("logConsumption", "setting_logConsumption_label".Translate(), "setting_logConsumption_desc".Translate(), false);
+			LogConsumedResourcesSetting.VisibilityPredicate = devModeVisible;
+
+			NoVomitingSetting = Settings.GetHandle("noVomiting", "setting_noVomiting_label".Translate(), "setting_noVomiting_desc".Translate(), false);
+			NoVomitingSetting.VisibilityPredicate = devModeVisible;
 		}
 	}
 }

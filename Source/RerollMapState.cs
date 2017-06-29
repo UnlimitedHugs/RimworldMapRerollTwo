@@ -4,6 +4,7 @@ using Verse;
 namespace Reroll2 {
 	public class RerollMapState : IExposable {
 		public bool RerollGenerated;
+		public float ResourceBalance;
 		public MapGeneratorDef UsedMapGenerator;
 		private List<int> _scenarioGeneratedThingIds;
 		private List<int> _playerAddedThingIds;
@@ -22,6 +23,7 @@ namespace Reroll2 {
 
 		public void ExposeData() {
 			Scribe_Values.Look(ref RerollGenerated, "rerollGenerated", false);
+			Scribe_Values.Look(ref ResourceBalance, "resourceBalance", 0f);
 			Scribe_Defs.Look(ref UsedMapGenerator, "usedMapGenerator");
 			Scribe_Collections.Look(ref _scenarioGeneratedThingIds, "scenarioGeneratedThingIds", LookMode.Value);
 			Scribe_Collections.Look(ref _playerAddedThingIds, "playerAddedThingIds", LookMode.Value);

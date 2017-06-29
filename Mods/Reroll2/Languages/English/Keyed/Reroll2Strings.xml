@@ -1,46 +1,17 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <LanguageData>
+
 	<Reroll2_rerollMap>Reroll Map</Reroll2_rerollMap>
 	<Reroll2_rerollGeysers>Reroll Geysers</Reroll2_rerollGeysers>
 	<Reroll2_rerollInProgress>Reroll in progress</Reroll2_rerollInProgress>
 	
-	<!-- optional loading messages, vanilla loading message will be used if none are found -->
-	
-	<Reroll2_loading0>Bribing Fates</Reroll2_loading0>
-	<Reroll2_loading1>Reticulating Splines</Reroll2_loading1>
-	<Reroll2_loading2>Rewinding Time</Reroll2_loading2>
-	<Reroll2_loading3>Meanwhile, in Texas</Reroll2_loading3>
-	<Reroll2_loading4>Twiddling thumbs</Reroll2_loading4>
-	<Reroll2_loading5>Recreating universe</Reroll2_loading5>
-	<Reroll2_loading6>Shifting continents</Reroll2_loading6>
-	<Reroll2_loading7>Growing rocks</Reroll2_loading7>
-	<Reroll2_loading8>Breeding Thrumbos</Reroll2_loading8>
-	<Reroll2_loading9>You saw nothing</Reroll2_loading9>
-	<Reroll2_loading10>Cranking Magic</Reroll2_loading10>
-	<Reroll2_loading11>Poking God</Reroll2_loading11>
-	<Reroll2_loading12>Hiding treasure</Reroll2_loading12>
-	<Reroll2_loading13>Taunting mechanoids</Reroll2_loading13>
-	<Reroll2_loading14>Fueling OCD</Reroll2_loading14>
-	<Reroll2_loading15>Making More Better</Reroll2_loading15>
-	<Reroll2_loading16>Breaking rules</Reroll2_loading16>
-	<Reroll2_loading17>Draining oceans</Reroll2_loading17>
-	<Reroll2_loading18>Rolling dice</Reroll2_loading18>
-	<Reroll2_loading19>Compacting steel</Reroll2_loading19>
-	<Reroll2_loading20>Hiding gold</Reroll2_loading20>
-	<Reroll2_loading21>Flushing evidence</Reroll2_loading21>
-	<Reroll2_loading22>We must go deeper</Reroll2_loading22>
-	<Reroll2_loading23>'T was only a dream</Reroll2_loading23>
-	<Reroll2_loading24>Mocking pirates</Reroll2_loading24>
-	<Reroll2_loading25>Grinding gears</Reroll2_loading25>
-	<Reroll2_loading26>Fluffing bunnies</Reroll2_loading26>
-	<Reroll2_loading27>Refueling Boomalopes</Reroll2_loading27>
-	<Reroll2_loading28>Rerolling hills</Reroll2_loading28>
-	<Reroll2_loading29>Flattening world</Reroll2_loading29>
-	<Reroll2_loading30>Preparing carefully</Reroll2_loading30>
-	<Reroll2_loading31>Spinning up world</Reroll2_loading31>
-	<Reroll2_loading32>Building pirate bases</Reroll2_loading32>
-	<Reroll2_loading33>Hiding pentagons</Reroll2_loading33>
-	<Reroll2_loading34>Sorting rocks</Reroll2_loading34>
-	<Reroll2_loading35>Sticking the landing</Reroll2_loading35>
-	
+	<Reroll2_cannotAfford>Cannot afford operation</Reroll2_cannotAfford>
+
+	<setting_paidRerolls_label>Rerolls cost resources</setting_paidRerolls_label>
+	<setting_paidRerolls_desc>When enabled, rerolling maps and geysers will cost unmined resources from the map.</setting_paidRerolls_desc>
+	<setting_logConsumption_label>Log consumed resources</setting_logConsumption_label>
+	<setting_logConsumption_desc>Writes the amounts of resources consumed by the reroll operations to the console.</setting_logConsumption_desc>
+	<setting_noVomiting_label>Disable Cryptosleep sickness</setting_noVomiting_label>
+	<setting_noVomiting_desc>Enable this to keep your colonists from vomiting all over your shiny new map.</setting_noVomiting_desc>
+
 </LanguageData>

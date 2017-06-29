@@ -20,6 +20,11 @@ namespace Reroll2 {
 			public static SoundDef RerollMonumentStartup;
 			public static SoundDef RerollMonumentDrone;
 		}
+		
+		[DefOf]
+		public static class Settings {
+			public static RerollSettingsDef MapRerollSettings;
+		}
 
 		[StaticConstructorOnStartup]
 		public static class Textures {

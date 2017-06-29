@@ -3,10 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using RimWorld.Planet;
+using UnityEngine;
 using Verse;
+using Verse.Sound;
 
 namespace Reroll2 {
 	public static class RerollToolbox {
+		private const sbyte ThingMemoryState = -2;
+		private const sbyte ThingDiscardedState = -3;
+
 		public static void DoMapReroll() {
 			var oldMap = Find.VisibleMap;
 			if (oldMap == null) {
@@ -46,6 +51,7 @@ namespace Reroll2 {
 				var newMapState = GetStateForMap(newMap);
 				newMapState.RerollGenerated = true;
 				newMapState.PlayerAddedThingIds = oldMapState.PlayerAddedThingIds;
+				newMapState.ResourceBalance = oldMapState.ResourceBalance;
 
 				if (!isOnStartingTile) {
 					SpawnPawnsOnMap(playerPawns, newMap);
@@ -87,6 +93,101 @@ namespace Reroll2 {
 			var state = GetStateForMap(map);
 			var generatedThingIds = GetMapThingsAndPawnsExceptColonists(map).Select(t => t.thingIDNumber);
 			state.ScenarioGeneratedThingIds = generatedThingIds.ToList();
+		}
+
+		public static void ReduceMapResources(Map map, float consumePercent, float resourcesPercentBalance) {
+			if (resourcesPercentBalance == 0) return;
+			var rockDef = Find.World.NaturalRockTypesIn(map.Tile).FirstOrDefault();
+			var mapResources = GetAllResourcesOnMap(map);
+
+			var newResourceAmount = Mathf.Clamp(resourcesPercentBalance - consumePercent, 0, 100);
+			var originalResAmount = Mathf.CeilToInt(mapResources.Count / (resourcesPercentBalance / 100));
+			var percentageChange = resourcesPercentBalance - newResourceAmount;
+			var resourceToll = Mathf.CeilToInt(Mathf.Abs(originalResAmount * (percentageChange / 100)));
+
+			var toll = resourceToll;
+			if (mapResources.Count > 0) {
+				// eat random resources
+				while (mapResources.Count > 0 && toll > 0) {
+					var resIndex = UnityEngine.Random.Range(0, mapResources.Count);
+					var resThing = mapResources[resIndex];
+
+					SneakilyDestroyResource(resThing);
+					mapResources.RemoveAt(resIndex);
+					if (rockDef != null) {
+						// put some rock in their place
+						var rock = ThingMaker.MakeThing(rockDef);
+						GenPlace.TryPlaceThing(rock, resThing.Position, map, ThingPlaceMode.Direct);
+					}
+					toll--;
+				}
+			}
+			if (Reroll2Controller.Instance.LogConsumedResourcesSetting && Prefs.DevMode) {
+				Reroll2Controller.Instance.Logger.Message("Ordered to consume " + consumePercent + "%, with current resources at " + resourcesPercentBalance + "%. Consuming " +
+															resourceToll + " resource spots, " + mapResources.Count + " left");
+				if (toll > 0) Reroll2Controller.Instance.Logger.Message("Failed to consume " + toll + " resource spots.");
+			}
+
+		}
+
+		public static List<Thing> GetAllResourcesOnMap(Map map) {
+			return map.listerThings.AllThings.Where(t => t.def != null && t.def.building != null && t.def.building.mineableScatterCommonality > 0).ToList();
+		}
+
+		public static void TryStopPawnVomiting(Map map) {
+			if (!Reroll2Controller.Instance.NoVomitingSetting) return;
+			foreach (var pawn in GetAllPlayerPawnsOnMap(map)) {
+				foreach (var hediff in pawn.health.hediffSet.hediffs) {
+					if (hediff.def != HediffDefOf.CryptosleepSickness) continue;
+					pawn.health.RemoveHediff(hediff);
+					break;
+				}
+			}
+		}
+
+		public static void SubtractResourcePercentage(Map map, float percent) {
+			var rerollState = GetStateForMap(map);
+			ReduceMapResources(map, percent, rerollState.ResourceBalance);
+			rerollState.ResourceBalance = Mathf.Clamp(rerollState.ResourceBalance - percent, 0f, 100f);
+		}
+
+		/*
+		 * destroying a resource outright causes too much overhead: fog, area reveal, pathing, roof updates, etc
+		 * we just want to replace it. So, we manually strip it out of the map and do some cleanup.
+		 * The following is Thing.Despawn code with the unnecessary (for buildings, ar least) parts stripped out, plus key parts from Building.Despawn
+		 * TODO: This approach may break with future releases (if thing despawning changes), so it's worth checking over.
+		 */
+		private static void SneakilyDestroyResource(Thing res) {
+			var map = res.Map;
+			RegionListersUpdater.DeregisterInRegions(res, map);
+			map.spawnedThings.Remove(res);
+			map.listerThings.Remove(res);
+			map.thingGrid.Deregister(res);
+			map.coverGrid.DeRegister(res);
+			map.tooltipGiverList.Notify_ThingDespawned(res);
+			if (res.def.graphicData != null && res.def.graphicData.Linked) {
+				map.linkGrid.Notify_LinkerCreatedOrDestroyed(res);
+				map.mapDrawer.MapMeshDirty(res.Position, MapMeshFlag.Things, true, false);
+			}
+			Find.Selector.Deselect(res);
+			res.DirtyMapMesh(map);
+			if (res.def.drawerType != DrawerType.MapMeshOnly) {
+				map.dynamicDrawManager.DeRegisterDrawable(res);
+			}
+			ReflectionCache.Thing_State.SetValue(res, res.def.DiscardOnDestroyed ? ThingDiscardedState : ThingMemoryState);
+			Find.TickManager.DeRegisterAllTickabilityFor(res);
+			map.attackTargetsCache.Notify_ThingDespawned(res);
+			StealAIDebugDrawer.Notify_ThingChanged(res);
+			// building-specific cleanup
+			var b = (Building)res;
+			if (res.def.IsEdifice()) map.edificeGrid.DeRegister(b);
+			var sustainer = (Sustainer)ReflectionCache.Building_SustainerAmbient.GetValue(res);
+			if (sustainer != null) sustainer.End();
+			map.mapDrawer.MapMeshDirty(b.Position, MapMeshFlag.Buildings);
+			map.glowGrid.MarkGlowGridDirty(b.Position);
+			map.listerBuildings.Remove((Building)res);
+			map.listerBuildingsRepairable.Notify_BuildingDeSpawned(b);
+			map.designationManager.Notify_BuildingDespawned(b);
 		}
 
 		private static void DestroyThingsInWorldById(IEnumerable<int> idsToDestroy) {

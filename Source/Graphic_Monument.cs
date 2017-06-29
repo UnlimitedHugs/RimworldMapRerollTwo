@@ -75,9 +75,10 @@ namespace Reroll2 {
 		public Graphic_Monument_Materials(GraphicData_Monument data, Color colorModifier) {
 			var baseShader = ShaderDatabase.ShaderFromType(data.baseShaderType);
 			BaseMat = ScheduleTextureForMaterial(new Material(baseShader), data.baseTexPath);
-			DiceMat = ScheduleTextureForMaterial(new Material(baseShader), data.diceTexPath);
+			var diceShader = ShaderDatabase.ShaderFromType(data.diceShaderType);
+			DiceMat = ScheduleTextureForMaterial(new Material(diceShader), data.diceTexPath);
 			DiceMat.color = Color.white;
-			DiceRadialMat = ScheduleTextureForMaterial(new Material(baseShader), data.diceRadialTexPath);
+			DiceRadialMat = ScheduleTextureForMaterial(new Material(diceShader), data.diceRadialTexPath);
 			var glowShader = ShaderDatabase.ShaderFromType(data.glowShaderType);
 			DiceGlowMat = ScheduleTextureForMaterial(new Material(glowShader), data.diceGlowTexPath);
 			DiceGlowRadialMat = ScheduleTextureForMaterial(new Material(glowShader), data.diceGlowRadialTexPath);

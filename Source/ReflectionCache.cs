@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Reflection;
 using Harmony;
-using RimWorld;
-using RimWorld.Planet;
 using Verse;
 using Verse.Sound;
 
@@ -12,10 +10,14 @@ namespace Reroll2 {
 
 		public static FieldInfo Sustainer_SubSustainers { get; private set; }
 		public static FieldInfo SubSustainer_Samples { get; private set; }
+		public static FieldInfo Thing_State { get; private set; }
+		public static FieldInfo Building_SustainerAmbient { get; private set; }
 
 		public static void PrepareReflection() {
 			Sustainer_SubSustainers = ReflectField("subSustainers", typeof(Sustainer), typeof(List<SubSustainer>));
 			SubSustainer_Samples = ReflectField("samples", typeof(SubSustainer), typeof(List<SampleSustainer>));
+			Thing_State = ReflectField("mapIndexOrState", typeof(Thing), typeof(sbyte));
+			Building_SustainerAmbient = ReflectField("sustainerAmbient", typeof(Building), typeof(Sustainer));
 		}
 
 		private static Type ReflectType(string nameWithNamespace, Assembly assembly = null) {

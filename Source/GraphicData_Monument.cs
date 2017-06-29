@@ -7,6 +7,7 @@ namespace Reroll2 {
 		public Vector2 baseDrawSize = Vector2.one;
 		public Vector2 diceDrawSize = Vector2.one;
 		public ShaderType baseShaderType;
+		public ShaderType diceShaderType;
 		public ShaderType glowShaderType;
 		public string baseTexPath;
 		public string diceTexPath;
