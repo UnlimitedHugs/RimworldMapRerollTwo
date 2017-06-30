@@ -56,7 +56,7 @@ namespace Reroll2 {
 				newMapState.PlayerAddedThingIds = oldMapState.PlayerAddedThingIds;
 				newMapState.ResourceBalance = oldMapState.ResourceBalance;
 				newMapState.RerollSeed = mapSeed;
-				SendMapStateSetEventToThings(newMap);
+				InvokeOnRerollEventReceivers(newMap, receiver => receiver.OnMapStateSet());
 
 				if (!isOnStartingTile) {
 					SpawnPawnsOnMap(playerPawns, newMap);
@@ -156,12 +156,35 @@ namespace Reroll2 {
 			rerollState.ResourceBalance = Mathf.Clamp(rerollState.ResourceBalance - percent, 0f, 100f);
 		}
 
-		/*
-		 * destroying a resource outright causes too much overhead: fog, area reveal, pathing, roof updates, etc
-		 * we just want to replace it. So, we manually strip it out of the map and do some cleanup.
-		 * The following is Thing.Despawn code with the unnecessary (for buildings, ar least) parts stripped out, plus key parts from Building.Despawn
-		 * TODO: This approach may break with future releases (if thing despawning changes), so it's worth checking over.
-		 */
+		public static void InvokeOnRerollEventReceivers(Map map, Action<IRerollEventReceiver> action) {
+			if (map.listerBuildings == null) return;
+			var allThings = map.listerThings.AllThings;
+			for (var i = 0; i < allThings.Count; i++) {
+				var receiver = allThings[i] as IRerollEventReceiver;
+				if (receiver != null) {
+					action(receiver);
+				}
+			}
+		}
+
+		public static void ResetIncidentScenarioParts(Scenario scenario) {
+			foreach (var part in scenario.AllParts) {
+				if (part != null && part.GetType() == ReflectionCache.ScenPartCreateIncidentType) {
+					ReflectionCache.CreateIncident_IsFinished.SetValue(part, false);
+				}
+			}
+		}
+
+		public static void ReceiveMonumentDeactivationLetter(Building_Monument monument) {
+			Find.LetterStack.ReceiveLetter("Reroll2_deactivationLetter".Translate(), "Reroll2_deactivationLetter_text".Translate(), LetterDefOf.BadNonUrgent, monument);
+		}
+
+		/// <summary>
+		/// destroying a resource outright causes too much overhead: fog, area reveal, pathing, roof updates, etc
+		///	we just want to replace it. So, we manually strip it out of the map and do some cleanup.
+		/// The following is Thing.Despawn code with the unnecessary (for buildings, ar least) parts stripped out, plus key parts from Building.Despawn 
+		/// TODO: This approach may break with future releases (if thing despawning changes), so it's worth checking over.
+		/// </summary>
 		private static void SneakilyDestroyResource(Thing res) {
 			var map = res.Map;
 			RegionListersUpdater.DeregisterInRegions(res, map);
@@ -193,14 +216,6 @@ namespace Reroll2 {
 			map.listerBuildings.Remove((Building)res);
 			map.listerBuildingsRepairable.Notify_BuildingDeSpawned(b);
 			map.designationManager.Notify_BuildingDespawned(b);
-		}
-
-		public static void ResetIncidentScenarioParts(Scenario scenario) {
-			foreach (var part in scenario.AllParts) {
-				if (part != null && part.GetType() == ReflectionCache.ScenPartCreateIncidentType) {
-					ReflectionCache.CreateIncident_IsFinished.SetValue(part, false);
-				}
-			}
 		}
 
 		private static void DestroyThingsInWorldById(IEnumerable<int> idsToDestroy) {
@@ -358,33 +373,10 @@ namespace Reroll2 {
 			return things.Where(t => !idSet.Contains(t.thingIDNumber));
 		}
 
-		private static IEnumerable<IRerollEventReceiver> EnumerateRerollEventReceivers(Map map) {
-			if (map.listerBuildings == null) yield break;
-			var allThings = map.listerThings.AllThings;
-			for (var i = 0; i < allThings.Count; i++) {
-				var receiver = allThings[i] as IRerollEventReceiver;
-				if (receiver != null) {
-					yield return receiver;
-				}
-			}
-		}
-
 		private static string GenerateNewRerollSeed(string previousSeed) {
 			const int magicNumber = 3;
 			unchecked {
 				return ((previousSeed.GetHashCode() << 1) * magicNumber).ToString();
-			}
-		}
-
-		public static void SendMapRerolledEventToThings(Map map) {
-			foreach (var receiver in EnumerateRerollEventReceivers(map)) {
-				receiver.OnMapRerolled();
-			}
-		}
-
-		public static void SendMapStateSetEventToThings(Map map) {
-			foreach (var receiver in EnumerateRerollEventReceivers(map)) {
-				receiver.OnMapStateSet();
 			}
 		}
 	}

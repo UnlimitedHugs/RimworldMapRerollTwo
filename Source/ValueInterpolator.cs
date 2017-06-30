@@ -29,13 +29,14 @@ namespace Reroll2 {
 			this.value = value;
 		}
 
-		public void StartInterpolation(float finalValue, float interpolationDuration, InterpolationCurves.Curve interpolationCurve) {
+		public ValueInterpolator StartInterpolation(float finalValue, float interpolationDuration, InterpolationCurves.Curve interpolationCurve) {
 			initialValue = value;
 			elapsedTime = 0;
 			targetValue = finalValue;
 			duration = interpolationDuration;
 			curve = interpolationCurve;
 			finished = false;
+			return this;
 		}
 
 		public void ExposeData() {

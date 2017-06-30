@@ -2,5 +2,6 @@
 	public interface IRerollEventReceiver {
 		void OnMapRerolled();
 		void OnMapStateSet();
+		void OnResourceRockMined();
 	}
 }

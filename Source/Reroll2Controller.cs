@@ -62,14 +62,14 @@ namespace Reroll2 {
 			var mapState = RerollToolbox.GetStateForMap(map);
 			if (!mapState.RerollGenerated || !PaidRerollsSetting) {
 				mapState.ResourceBalance = MaxResourceBalance;
-				RerollToolbox.SendMapStateSetEventToThings(map);
+				RerollToolbox.InvokeOnRerollEventReceivers(map, receiver => receiver.OnMapStateSet());
 			}
 			
 			RerollToolbox.TryStopPawnVomiting(map);
 
 			if (mapState.RerollGenerated && rerollInProgress) {
 				rerollInProgress = false;
-				RerollToolbox.SendMapRerolledEventToThings(map);
+				RerollToolbox.InvokeOnRerollEventReceivers(map, receiver => receiver.OnMapRerolled());
 				RerollToolbox.KillMapIntroDialog();
 				if (PaidRerollsSetting) {
 					// adjust map to current remaining resources and charge for the reroll
@@ -133,6 +133,18 @@ namespace Reroll2 {
 
 			NoVomitingSetting = Settings.GetHandle("noVomiting", "setting_noVomiting_label".Translate(), "setting_noVomiting_desc".Translate(), false);
 			NoVomitingSetting.VisibilityPredicate = devModeVisible;
+		}
+
+		public static void OnBeforeBuildingDestroyed(Building building, DestroyMode mode) {
+			var mapHasMonument = building.Map != null && RerollToolbox.GetStateForMap(building.Map).HasActiveMonument;
+			if (mode == DestroyMode.KillFinalize && 
+				building.def != null && 
+				building.def.mineable && 
+				building.def.building != null && 
+				building.def.building.isResourceRock &&
+				mapHasMonument) {
+				RerollToolbox.InvokeOnRerollEventReceivers(building.Map, receiver => receiver.OnResourceRockMined());
+			}
 		}
 	}
 }

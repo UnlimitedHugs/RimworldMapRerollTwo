@@ -68,6 +68,7 @@
     <Compile Include="Source\Graphic_Monument.cs" />
     <Compile Include="Source\GenStep_Monument.cs" />
     <Compile Include="Source\IRerollEventReceiver.cs" />
+    <Compile Include="Source\Patches\Building_Destroy_Patch.cs" />
     <Compile Include="Source\RerollSettingsDef.cs" />
     <Compile Include="Source\ReflectionCache.cs" />
     <Compile Include="Source\ValueInterpolator.cs" />

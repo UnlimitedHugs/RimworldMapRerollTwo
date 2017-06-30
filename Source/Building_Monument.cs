@@ -16,9 +16,11 @@ namespace Reroll2 {
 		private const float ScreenShakeMultiplier = .55f;
 
 		private enum PendingOperationType {
-			None,
-			MapReroll,
-			GeyserReroll
+			None, MapReroll, GeyserReroll
+		}
+
+		private enum MonumentState {
+			Unclaimed, Active, Inert
 		}
 
 		// 0-1
@@ -50,25 +52,37 @@ namespace Reroll2 {
 		private PendingOperationType pendingOperation;
 		private Sustainer droneSustainer;
 		private Gizmo_ResourceBalance resourceBalanceGizmo;
-		private bool isActive;
+		private MonumentState state;
+		private ValueInterpolator startupFlicker;
 
 		public void OnMapRerolled() {
 			Find.Selector.ClearSelection();
 			Find.Selector.Select(this, false);
-			isActive = true;
+			state = MonumentState.Active;
 			SetFaction(Faction.OfPlayer);
-			SpinDown();
+			SpinDownFromMax();
 		}
 
 		public void OnMapStateSet() {
 			resourceBalanceGizmo = new Gizmo_ResourceBalance(Map);
 		}
 
+		public void OnResourceRockMined() {
+			if (state != MonumentState.Inert) {
+				state = MonumentState.Inert;
+				var mapState = RerollToolbox.GetStateForMap(Map);
+				mapState.HasActiveMonument = false;
+				pendingOperation = PendingOperationType.None;
+				RerollToolbox.ReceiveMonumentDeactivationLetter(this);
+				SpinDownToZero();
+			}
+		}
+
 		public override void ExposeData() {
 			base.ExposeData();
 			Scribe_Deep.Look(ref speedInterpolator, "speedInterpolator");
 			Scribe_Values.Look(ref pendingOperation, "pendingOperation", PendingOperationType.None);
-			Scribe_Values.Look(ref isActive, "isActive", false);
+			Scribe_Values.Look(ref state, "state", MonumentState.Unclaimed);
 		}
 
 		public override void SpawnSetup(Map map, bool respawningAfterLoad) {
@@ -81,6 +95,12 @@ namespace Reroll2 {
 				Reroll2Controller.Instance.Logger.Error("Building_Monument requires a BuildingProperties_Monument");
 				Destroy();
 			}
+			if (state == MonumentState.Unclaimed) {
+				SetFaction(null);
+			}
+			if (state != MonumentState.Inert) {
+				RerollToolbox.GetStateForMap(map).HasActiveMonument = true;
+			}
 			LongEventHandler.ExecuteWhenFinished(delegate {
 				//var droneInfo = SoundInfo.InMap(this);
 				//droneSustainer = Resources.Sound.RerollMonumentDrone.TrySpawnSustainer(droneInfo);
@@ -91,12 +111,12 @@ namespace Reroll2 {
 		}
 		
 		public override void SetFaction(Faction newFaction, Pawn recruiter = null) {
-			var oldFaction = factionInt;
 			base.SetFaction(newFaction, recruiter);
-			if (!isActive && oldFaction != newFaction && newFaction.IsPlayer) {
-				isActive = true;
+			if (state == MonumentState.Unclaimed && newFaction != null && newFaction.IsPlayer) {
+				state = MonumentState.Active;
 				speedInterpolator.value = 0;
 				SpinUp();
+				startupFlicker = new ValueInterpolator().SetFinishedCallback(OnBlinkerInterpolationFinished).StartInterpolation(1f, SpeedTransitionDuration, InterpolationCurves.Linear);
 				resourceBalanceGizmo = new Gizmo_ResourceBalance(Map, 0);
 				pendingOperation = PendingOperationType.None;
 				Resources.Sound.RerollMonumentStartup.PlayOneShot(this);
@@ -105,13 +125,17 @@ namespace Reroll2 {
 
 		public override void Draw() {
 			if (!Find.TickManager.Paused) {
-				if (isActive) {
+				if (state == MonumentState.Active || !speedInterpolator.finished) {
 					var rotationSpeed = speedInterpolator.Update();
 					DiceRotation = (DiceRotation + rotationSpeed * Time.deltaTime) % 360;
 					var proportionalRotationSpeed = Mathf.Clamp01((rotationSpeed - MinSpeed) / (MaxSpeed - MinSpeed));
 					RadialAlpha = proportionalRotationSpeed;
 					GlowColorHue = (GlowColorHue + Mathf.Lerp(HueIncrementPerSecondSlow, HueIncrementPerSecondFast, proportionalRotationSpeed) * Time.deltaTime) % 1f;
 					GlowAlpha = MinGlow + proportionalRotationSpeed * (1f - MinGlow);
+					if (startupFlicker!=null) {
+						var blinkerProgress = startupFlicker.Update();
+						GlowAlpha = Rand.Range(blinkerProgress, 1f);
+					}
 					GlowColorSaturation = proportionalRotationSpeed / 2f + .5f;
 					if (!Reroll2Controller.Instance.PaidRerollsSetting) {
 						GlowColorSaturation = 0;
@@ -121,7 +145,6 @@ namespace Reroll2 {
 						SetSustainerVolume(droneSustainer, proportionalRotationSpeed);
 					}
 				} else {
-					DiceRotation = 0;
 					RadialAlpha = 0;
 					GlowAlpha = 0;
 				}
@@ -155,7 +178,7 @@ namespace Reroll2 {
 			foreach (var gizmo in base.GetGizmos()) {
 				yield return gizmo;
 			}
-			if (isActive) {
+			if (state == MonumentState.Active) {
 				var controlsDisabled = OperationInProgress || Reroll2Controller.Instance.GeyserRerollInProgress;
 				var disabledReason = controlsDisabled ? "Reroll2_rerollInProgress".Translate() : null;
 				yield return new Command_Action {
@@ -209,7 +232,7 @@ namespace Reroll2 {
 					break;
 				case PendingOperationType.GeyserReroll:
 					Reroll2Controller.Instance.RerollGeysers();
-					SpinDown();
+					SpinDownFromMax();
 					break;
 				case PendingOperationType.None:
 					break;
@@ -218,17 +241,27 @@ namespace Reroll2 {
 			}
 			pendingOperation = PendingOperationType.None;
 			if (finalvalue == MaxSpeed) {
-				SpinDown();
+				SpinDownFromMax();
 			}
+		}
+
+		private void OnBlinkerInterpolationFinished(ValueInterpolator interpolator, float finalvalue, float interpolationduration, InterpolationCurves.Curve interpolationcurve) {
+			startupFlicker = null;
 		}
 
 		private void SpinUp() {
 			speedInterpolator.StartInterpolation(MaxSpeed, SpeedTransitionDuration, InterpolationCurves.CubicEaseInOut);
 		}
 
-		private void SpinDown() {
+		private void SpinDownFromMax() {
 			speedInterpolator.value = MaxSpeed;
 			speedInterpolator.StartInterpolation(MinSpeed, SpeedTransitionDuration, InterpolationCurves.CubicEaseInOut);
+		}
+
+		private void SpinDownToZero() {
+			if (speedInterpolator.value > 0f) {
+				speedInterpolator.StartInterpolation(0f, SpeedTransitionDuration, InterpolationCurves.CubicEaseOut);
+			}
 		}
 
 		private void SetSustainerVolume(Sustainer sus, float volume) {
@@ -243,10 +276,6 @@ namespace Reroll2 {
 					sample.resolvedVolume = volume;
 				}
 			}
-		}
-
-		public override string GetInspectString() {
-			return RadialAlpha.ToString();
 		}
 	}
 

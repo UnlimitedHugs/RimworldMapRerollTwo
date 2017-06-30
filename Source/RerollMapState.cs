@@ -6,6 +6,7 @@ namespace Reroll2 {
 		public bool RerollGenerated;
 		public string RerollSeed;
 		public float ResourceBalance;
+		public bool HasActiveMonument;
 		public MapGeneratorDef UsedMapGenerator;
 		private List<int> _scenarioGeneratedThingIds;
 		private List<int> _playerAddedThingIds;
