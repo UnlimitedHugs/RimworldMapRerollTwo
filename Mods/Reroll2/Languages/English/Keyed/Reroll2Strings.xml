@@ -20,5 +20,7 @@
 	<setting_logConsumption_desc>Writes the amounts of resources consumed by the reroll operations to the console.</setting_logConsumption_desc>
 	<setting_noVomiting_label>Disable Cryptosleep sickness</setting_noVomiting_label>
 	<setting_noVomiting_desc>Enable this to keep your colonists from vomiting all over your shiny new map.</setting_noVomiting_desc>
+	<setting_antiCheese_label>Anti-cheese</setting_antiCheese_label>
+	<setting_antiCheese_desc>When enabled, rerolling a map will destroy all things generated with the old map, except for your colonists.</setting_antiCheese_desc>
 
 </LanguageData>

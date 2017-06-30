@@ -90,7 +90,7 @@ namespace Reroll2 {
 			if (speedInterpolator == null) {
 				speedInterpolator = new ValueInterpolator(MinSpeed);
 			}
-			speedInterpolator.SetFinishedCallback(OnSpeedInterpolationFinsihed);
+			speedInterpolator.SetFinishedCallback(OnSpeedInterpolationFinished);
 			if (Props == null) {
 				Reroll2Controller.Instance.Logger.Error("Building_Monument requires a BuildingProperties_Monument");
 				Destroy();
@@ -224,7 +224,7 @@ namespace Reroll2 {
 			return false;
 		}
 
-		private void OnSpeedInterpolationFinsihed(ValueInterpolator interpolator, float finalvalue, float interpolationduration, InterpolationCurves.Curve interpolationcurve) {
+		private void OnSpeedInterpolationFinished(ValueInterpolator interpolator, float finalvalue, float interpolationduration, InterpolationCurves.Curve interpolationcurve) {
 			switch (pendingOperation) {
 				case PendingOperationType.MapReroll:
 					EndSustainer();

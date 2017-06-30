@@ -31,9 +31,10 @@ namespace Reroll2 {
 
 		public SettingHandle<bool> PaidRerollsSetting { get; private set; }
 		public SettingHandle<bool> DeterministicRerollsSetting { get; private set; }
+		public SettingHandle<bool> AntiCheeseSetting { get; private set; }
 		public SettingHandle<bool> LogConsumedResourcesSetting { get; private set; }
 		public SettingHandle<bool> NoVomitingSetting { get; private set; }
-		
+
 		private GeyserRerollTool geyserReroll;
 
 		private Reroll2Controller() {
@@ -127,7 +128,10 @@ namespace Reroll2 {
 			PaidRerollsSetting = Settings.GetHandle("paidRerolls", "setting_paidRerolls_label".Translate(), "setting_paidRerolls_desc".Translate(), true);
 			
 			DeterministicRerollsSetting = Settings.GetHandle("deterministicRerolls", "setting_deterministicRerolls_label".Translate(), "setting_deterministicRerolls_desc".Translate(), true);
-			
+
+			AntiCheeseSetting = Settings.GetHandle("antiCheese", "setting_antiCheese_label".Translate(), "setting_antiCheese_desc".Translate(), true);
+			AntiCheeseSetting.VisibilityPredicate = devModeVisible;
+
 			LogConsumedResourcesSetting = Settings.GetHandle("logConsumption", "setting_logConsumption_label".Translate(), "setting_logConsumption_desc".Translate(), false);
 			LogConsumedResourcesSetting.VisibilityPredicate = devModeVisible;
 

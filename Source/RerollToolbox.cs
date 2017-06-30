@@ -31,7 +31,7 @@ namespace Reroll2 {
 				IEnumerable<Thing> nonGeneratedThings = ResolveThingsFromIds(oldMap, oldMapState.PlayerAddedThingIds).ToList();
 				//Logger.Message("Non generated things: " + nonGeneratedThings.ListElements());
 
-				if (oldMapState.ScenarioGeneratedThingIds.Count > 0) {
+				if (oldMapState.ScenarioGeneratedThingIds.Count > 0 && Reroll2Controller.Instance.AntiCheeseSetting) {
 					ClearRelationsWithPawns(colonists, oldMapState.ScenarioGeneratedThingIds);
 					DestroyThingsInWorldById(oldMapState.ScenarioGeneratedThingIds);
 				}
