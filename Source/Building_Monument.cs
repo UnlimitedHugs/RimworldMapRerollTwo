@@ -224,7 +224,7 @@ namespace Reroll2 {
 			return false;
 		}
 
-		private void OnSpeedInterpolationFinished(ValueInterpolator interpolator, float finalvalue, float interpolationduration, InterpolationCurves.Curve interpolationcurve) {
+		private void OnSpeedInterpolationFinished(ValueInterpolator interpolator, float finalValue, float interpolationDuration, InterpolationCurves.Curve interpolationCurve) {
 			switch (pendingOperation) {
 				case PendingOperationType.MapReroll:
 					EndSustainer();
@@ -240,12 +240,12 @@ namespace Reroll2 {
 					throw new ArgumentOutOfRangeException();
 			}
 			pendingOperation = PendingOperationType.None;
-			if (finalvalue == MaxSpeed) {
+			if (finalValue == MaxSpeed) {
 				SpinDownFromMax();
 			}
 		}
 
-		private void OnBlinkerInterpolationFinished(ValueInterpolator interpolator, float finalvalue, float interpolationduration, InterpolationCurves.Curve interpolationcurve) {
+		private void OnBlinkerInterpolationFinished(ValueInterpolator interpolator, float finalValue, float interpolationDuration, InterpolationCurves.Curve interpolationCurve) {
 			startupFlicker = null;
 		}
 

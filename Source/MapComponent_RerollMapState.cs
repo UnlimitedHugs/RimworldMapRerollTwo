@@ -1,5 +1,4 @@
 ﻿using HugsLib.Utils;
-using Reroll2;
 using Verse;
 
 namespace Reroll2 {

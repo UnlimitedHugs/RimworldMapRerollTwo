@@ -15,17 +15,17 @@ namespace Reroll2 {
 		}
 
 		private bool TryPlaceMonument(Map map, int searchRadius) {
-			var cell = TryFindRandomCellForMoument(map, searchRadius);
+			var cell = TryFindRandomCellForMonument(map, searchRadius);
 			if (!cell.IsValid) return false;
 			GenSpawn.Spawn(Resources.Thing.RerollMonument, cell, map);
 			return true;
 		}
 
-		private IntVec3 TryFindRandomCellForMoument(Map map, int searchRadius) {
+		private IntVec3 TryFindRandomCellForMonument(Map map, int searchRadius) {
 			IntVec3 cell;
 			var monumentDef = Resources.Thing.RerollMonument;
 			var found = CellFinder.TryFindRandomCellNear(map.Center, map, searchRadius,
-				pos => !GenSpawn.WouldWipeAnythingWith(GenAdj.OccupiedRect(pos, Rot4.North, monumentDef.Size), monumentDef, map, t => t is Building)
+				pos => !map.fogGrid.IsFogged(pos) && !GenSpawn.WouldWipeAnythingWith(GenAdj.OccupiedRect(pos, Rot4.North, monumentDef.Size), monumentDef, map, t => t is Building)
 				, out cell);
 			return found ? cell : IntVec3.Invalid;
 		}
