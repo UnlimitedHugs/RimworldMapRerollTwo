@@ -3,12 +3,23 @@
 	<name>Reroll2</name>
 	<author>UnlimitedHugs</author>
 	<targetVersion>0.17.0</targetVersion>
-	<url></url>
-	<description>Version: 1.0.0
+	<url>https://ludeon.com/forums/index.php?topic=34153</url>
+	<description>Version: 0.9.0
 
 &lt;size=20&gt;Description&lt;/size&gt;
+Allows to randomize your starting maps and geyser locations until you find something you like.
+Every reroll has a cost- in the form of unmined resources from your map.
+
+This is the beta version of the mod. Please report any issues in the forum thread.
 
 &lt;size=20&gt;How to use&lt;/size&gt;
+1) Start a new game or settle on a new map.
+2) Find and claim the Dice of Fate monument.
+3) With the monument selected, click on "Reroll map" or "Reroll geysers".
+
+Once you mine your first piece of ore, the monument will deactivate, and rerolling will become unavailable on that map.
+
+The resource cost is optional, and can be disabled in the Options &gt; Mod Settings menu.
 	</description>
 	
 	
