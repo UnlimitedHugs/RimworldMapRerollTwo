@@ -1,6 +1,7 @@
 ﻿using HugsLib;
 using HugsLib.Settings;
 using HugsLib.Utils;
+using UnityEngine;
 using Verse;
 
 namespace Reroll2 {
@@ -36,6 +37,7 @@ namespace Reroll2 {
 		public SettingHandle<bool> NoVomitingSetting { get; private set; }
 
 		private GeyserRerollTool geyserReroll;
+		private Texture2D mapPreviewTex;
 
 		private Reroll2Controller() {
 			Instance = this;
@@ -78,6 +80,7 @@ namespace Reroll2 {
 					RerollToolbox.SubtractResourcePercentage(map, Resources.Settings.MapRerollSettings.mapRerollCost);
 				}
 			}
+			mapPreviewTex = null;
 		}
 
 		public void RerollMap() {
@@ -116,6 +119,25 @@ namespace Reroll2 {
 
 		public override void Tick(int currentTick) {
 			if (geyserReroll != null) geyserReroll.OnTick();
+		}
+
+		public override void OnGUI() {
+			if (GUI.Button(new Rect(10, 10, 100, 30), "View this")) {
+				var currentMap = Find.VisibleMap;
+				var state = RerollToolbox.GetStateForMap(currentMap);
+				var seed = state.RerollSeed ?? Find.World.info.seedString;
+				MapPreviewGenerator.MakePreviewForSeed(seed, currentMap.Tile, currentMap.Size.x, state.UsedMapGenerator).Done(t => mapPreviewTex = t);
+			}
+			
+			if (GUI.Button(new Rect(10, 50, 50, 30), "Preview next")) {
+				var currentMap = Find.VisibleMap;
+				var state = RerollToolbox.GetStateForMap(currentMap);
+				var seed = RerollToolbox.GetNextRerollSeed(state);
+				MapPreviewGenerator.MakePreviewForSeed(seed, currentMap.Tile, currentMap.Size.x, state.UsedMapGenerator).Done(t => mapPreviewTex = t);
+			}
+			if (mapPreviewTex != null) {
+				GUI.DrawTexture(new Rect(10, 90, 400, 400), mapPreviewTex, ScaleMode.ScaleToFit, true);
+			}
 		}
 
 		public void RecordUsedMapGenerator(MapGeneratorDef def) {

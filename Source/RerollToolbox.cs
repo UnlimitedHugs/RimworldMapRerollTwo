@@ -42,8 +42,8 @@ namespace Reroll2 {
 				ResetIncidentScenarioParts(Find.Scenario);
 
 				var newParent = PlaceNewMapParent(originalTile);
-				var previousSeed = oldMapState.RerollSeed ?? Find.World.info.seedString + originalTile;
-				var mapSeed = Reroll2Controller.Instance.DeterministicRerollsSetting ? GenerateNewRerollSeed(previousSeed) : Rand.Int.ToString();
+
+				var mapSeed = GetNextRerollSeed(oldMapState);
 				var newMap = GenerateNewMapWithSeed(newParent, oldMap.Size, mapSeed);
 				SwitchToMap(newMap);
 				if (isOnStartingTile) {
@@ -65,6 +65,11 @@ namespace Reroll2 {
 
 				DiscardFactionBase(oldParent);
 			}, "GeneratingMap", true, GameAndMapInitExceptionHandlers.ErrorWhileGeneratingMap);
+		}
+
+		public static string GetNextRerollSeed(RerollMapState mapState) {
+			var previousSeed = mapState.RerollSeed ?? Find.World.info.seedString;
+			return Reroll2Controller.Instance.DeterministicRerollsSetting ? GenerateNewRerollSeed(previousSeed) : Rand.Int.ToString();
 		}
 
 		public static RerollMapState GetStateForMap(Map map = null) {

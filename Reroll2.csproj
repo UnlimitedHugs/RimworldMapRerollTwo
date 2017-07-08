@@ -68,7 +68,11 @@
     <Compile Include="Source\Graphic_Monument.cs" />
     <Compile Include="Source\GenStep_Monument.cs" />
     <Compile Include="Source\IRerollEventReceiver.cs" />
+    <Compile Include="Source\MapPreviewGenerator.cs" />
     <Compile Include="Source\Patches\Building_Destroy_Patch.cs" />
+    <Compile Include="Source\Patches\TerrainPatchMaker_Init_Patch.cs" />
+    <Compile Include="Source\Promises\Deferred.cs" />
+    <Compile Include="Source\Promises\IPromise.cs" />
     <Compile Include="Source\RerollSettingsDef.cs" />
     <Compile Include="Source\ReflectionCache.cs" />
     <Compile Include="Source\ValueInterpolator.cs" />

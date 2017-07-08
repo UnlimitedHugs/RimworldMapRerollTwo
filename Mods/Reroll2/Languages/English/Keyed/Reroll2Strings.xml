@@ -15,7 +15,6 @@
 	<setting_paidRerolls_desc>When enabled, rerolling maps and geysers will cost unmined resources from the map.</setting_paidRerolls_desc>
 	<setting_deterministicRerolls_label>Deterministic map rerolls</setting_deterministicRerolls_label>
 	<setting_deterministicRerolls_desc>When enabled, rerolling a map will always generate the same sequence of maps for the same world seed and world position.</setting_deterministicRerolls_desc>
-	<setting_paidRerolls_desc>When enabled, rerolling maps and geysers will cost unmined resources from the map.</setting_paidRerolls_desc>
 	<setting_logConsumption_label>Log consumed resources</setting_logConsumption_label>
 	<setting_logConsumption_desc>Writes the amounts of resources consumed by the reroll operations to the console.</setting_logConsumption_desc>
 	<setting_noVomiting_label>Disable Cryptosleep sickness</setting_noVomiting_label>
