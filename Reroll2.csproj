@@ -69,6 +69,7 @@
     <Compile Include="Source\GenStep_Monument.cs" />
     <Compile Include="Source\IRerollEventReceiver.cs" />
     <Compile Include="Source\MapPreviewGenerator.cs" />
+    <Compile Include="Source\Patches\BeachMaker_Init_Patch.cs" />
     <Compile Include="Source\Patches\Building_Destroy_Patch.cs" />
     <Compile Include="Source\Patches\TerrainPatchMaker_Init_Patch.cs" />
     <Compile Include="Source\Promises\Deferred.cs" />
