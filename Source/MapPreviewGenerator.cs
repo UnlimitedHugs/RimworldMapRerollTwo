@@ -7,14 +7,18 @@ using UnityEngine;
 using Verse;
 
 namespace Reroll2 {
+	/// <summary>
+	/// Given a map location and seed, generates an approximate preview texture of how the map would look once generated.
+	/// </summary>
 	public static class MapPreviewGenerator {
-		private delegate TerrainDef TerrainFromMethod(IntVec3 c, Map map, float elevation, float fertility, object riverMaker, bool preferSolid);
 		private delegate TerrainDef RiverMakerTerrainAt(IntVec3 c);
 		private delegate TerrainDef BeachMakerBeachTerrainAt(IntVec3 c, BiomeDef biome);
 
-		private static readonly Color defaultTerrainColor = GenColor.FromHex("594A3B");
+		private static readonly Color defaultTerrainColor = GenColor.FromHex("6D5B49");
 		private static readonly Color missingTerrainColor = new Color(0.38f, 0.38f, 0.38f);
 		private static readonly Color solidStoneColor = GenColor.FromHex("36271C");
+		private static readonly Color solidStoneHighlightColor = GenColor.FromHex("4C3426");
+		private static readonly Color solidStoneShadowColor = GenColor.FromHex("1C130E");
 		private static readonly Color waterColorDeep = GenColor.FromHex("3A434D");
 		private static readonly Color waterColorShallow = GenColor.FromHex("434F50");
 
@@ -36,7 +40,7 @@ namespace Reroll2 {
 			{"WaterMovingShallow", waterColorShallow}
 		};
 		
-		public static IPromise<Texture2D> MakePreviewForSeed(string seed, int mapTile, int mapSize, MapGeneratorDef mapGenerator) {
+		public static IPromise<Texture2D> MakePreviewForSeed(string seed, int mapTile, int mapSize) {
 			var promise = new Deferred<Texture2D>();
 			var prevSeed = Find.World.info.seedString;
 			Find.World.info.seedString = seed;
@@ -50,8 +54,9 @@ namespace Reroll2 {
 					var beachTerrainAtDelegate =  (BeachMakerBeachTerrainAt)Delegate.CreateDelegate(typeof(BeachMakerBeachTerrainAt), null, ReflectionCache.BeachMaker_BeachTerrainAt);
 					var riverTerrainAtDelegate = riverMaker == null ? null : (RiverMakerTerrainAt)Delegate.CreateDelegate(typeof(RiverMakerTerrainAt), riverMaker, ReflectionCache.RiverMaker_TerrainAt);
 					ReflectionCache.BeachMaker_Init.Invoke(null, new object[] {grids.Map});
-					
-					foreach (var cell in CellRect.WholeMap(grids.Map)) {
+
+					var mapBounds = CellRect.WholeMap(grids.Map);
+					foreach (var cell in mapBounds) {
 						const float rockCutoff = .7f;
 						var terrainDef = TerrainFrom(cell, grids.Map, grids.ElevationGrid[cell], grids.FertilityGrid[cell], riverTerrainAtDelegate, beachTerrainAtDelegate, false);
 						Color pixelColor;
@@ -63,6 +68,9 @@ namespace Reroll2 {
 						}
 						tex.SetPixel(cell.x, cell.z, pixelColor);
 					}
+
+					AddBevelToSolidStone(tex);
+
 					tex.Apply();
 					foreach (var terrainPatchMaker in grids.Map.Biome.terrainPatchMakers) {
 						terrainPatchMaker.Cleanup();
@@ -81,6 +89,10 @@ namespace Reroll2 {
 			return promise;
 		}
 
+		/// <summary>
+		/// Identifies the terrain def that would have been used at the given map location.
+		/// Swiped from GenStep_Terrain. Extracted for performance reasons.
+		/// </summary>
 		private static TerrainDef TerrainFrom(IntVec3 c, Map map, float elevation, float fertility, RiverMakerTerrainAt riverTerrainAt, BeachMakerBeachTerrainAt beachTerrainAt, bool preferSolid) {
 			TerrainDef riverTerrain = null;
 			if (riverTerrainAt != null) {
@@ -121,6 +133,30 @@ namespace Reroll2 {
 			return TerrainDefOf.Sand;
 		}
 
+		/// <summary>
+		/// Adds highlights and shadows to the solid stone color in the texture
+		/// </summary>
+		private static void AddBevelToSolidStone(Texture2D tex) {
+			for (int x = 0; x < tex.width; x++) {
+				for (int y = 0; y < tex.height; y++) {
+					var isStone = tex.GetPixel(x, y) == solidStoneColor;
+					if (isStone) {
+						var colorBelow = y > 0 ? tex.GetPixel(x, y - 1) : Color.clear;
+						var isStoneBelow = colorBelow == solidStoneColor || colorBelow == solidStoneHighlightColor || colorBelow == solidStoneShadowColor;
+						var isStoneAbove = y < tex.height - 1 && tex.GetPixel(x, y + 1) == solidStoneColor;
+						if (!isStoneAbove) {
+							tex.SetPixel(x, y, solidStoneHighlightColor);
+						} else if (!isStoneBelow) {
+							tex.SetPixel(x, y, solidStoneShadowColor);
+						}
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Generate a minimal map with elevation and fertility grids
+		/// </summary>
 		private static MapElevationFertilityData GenerateMapGrids(int mapTile, int mapSize) {
 			var prevProgramState = Current.ProgramState;
 			Current.ProgramState = ProgramState.MapInitializing;

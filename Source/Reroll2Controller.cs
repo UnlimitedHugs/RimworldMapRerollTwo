@@ -132,14 +132,14 @@ namespace Reroll2 {
 				var currentMap = Find.VisibleMap;
 				var state = RerollToolbox.GetStateForMap(currentMap);
 				var seed = state.RerollSeed ?? Find.World.info.seedString;
-				MapPreviewGenerator.MakePreviewForSeed(seed, currentMap.Tile, currentMap.Size.x, state.UsedMapGenerator).Done(t => mapPreviewTex = t);
+				MapPreviewGenerator.MakePreviewForSeed(seed, currentMap.Tile, currentMap.Size.x).Done(t => mapPreviewTex = t);
 			}
 			
-			if (GUI.Button(new Rect(10, 50, 50, 30), "Preview next")) {
+			if (GUI.Button(new Rect(10, 50, 100, 30), "Preview next")) {
 				var currentMap = Find.VisibleMap;
 				var state = RerollToolbox.GetStateForMap(currentMap);
 				var seed = RerollToolbox.GetNextRerollSeed(state);
-				MapPreviewGenerator.MakePreviewForSeed(seed, currentMap.Tile, currentMap.Size.x, state.UsedMapGenerator).Done(t => mapPreviewTex = t);
+				MapPreviewGenerator.MakePreviewForSeed(seed, currentMap.Tile, currentMap.Size.x).Done(t => mapPreviewTex = t);
 			}
 			if (mapPreviewTex != null) {
 				GUI.DrawTexture(new Rect(10, 90, 400, 400), mapPreviewTex, ScaleMode.ScaleToFit, true);
