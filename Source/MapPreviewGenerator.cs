@@ -44,7 +44,7 @@ namespace Reroll2 {
 		private Thread workerThread;
 		private EventWaitHandle workHandle = new AutoResetEvent(false);
 		private EventWaitHandle disposeHandle = new AutoResetEvent(false);
-		private EventWaitHandle textureHandle = new AutoResetEvent(false);
+		private EventWaitHandle mainThreadHandle = new AutoResetEvent(false);
 		private Queue<QueuedPreviewRequest> queuedRequests = new Queue<QueuedPreviewRequest>();
 
 		public IPromise<Texture2D> QueuePreviewForSeed(string seed, int mapTile, int mapSize) {
@@ -62,44 +62,47 @@ namespace Reroll2 {
 		}
 
 		private void DoThreadWork() {
-			while (WaitHandle.WaitAny(new WaitHandle[] { workHandle, disposeHandle }) == 0) {
-				while (queuedRequests.Count > 0) {
-					var req = queuedRequests.Dequeue();
-					Texture2D texture = null;
-					Reroll2Controller.Instance.ExecuteInMainThread(() =>{
-						// textures must be instantiated in the main thread
-						texture = new Texture2D(req.MapSize, req.MapSize, TextureFormat.RGB24, false);
-						texture.Apply();
-						textureHandle.Set();
-					});
-					textureHandle.WaitOne(1000);
-					
-					try {
-						if (texture == null) {
-							throw new Exception("Could not create required texture.");
-						}
-						GeneratePreviewForSeed(req.Seed, req.MapTile, req.MapSize, texture);
-					} catch (Exception e) {
-						Reroll2Controller.Instance.Logger.Error("Failed to generate map preview: " + e);
-						texture = null;
-					}
-					if (texture != null) {
-						Reroll2Controller.Instance.ExecuteInMainThread(() => {
-							// upload in main thread
+			QueuedPreviewRequest request = null;
+			try {
+				while (queuedRequests.Count > 0 || WaitHandle.WaitAny(new WaitHandle[] {workHandle, disposeHandle}) == 0) {
+					if (queuedRequests.Count > 0) {
+						var req = queuedRequests.Dequeue();
+						request = req;
+						Texture2D texture = null;
+						WaitForExecutionInMainThread(() => {
+							// textures must be instantiated in the main thread
+							texture = new Texture2D(req.MapSize, req.MapSize, TextureFormat.RGB24, false);
 							texture.Apply();
-							textureHandle.Set();
 						});
-						textureHandle.WaitOne(1000);
-					}
-					Reroll2Controller.Instance.ExecuteInMainThread(() => {
-						if (texture == null) {
-							req.Promise.Reject();
-						} else {
-							req.Promise.Resolve(texture);
-							textureHandle.Set();
+
+						try {
+							if (texture == null) {
+								throw new Exception("Could not create required texture.");
+							}
+							GeneratePreviewForSeed(req.Seed, req.MapTile, req.MapSize, texture);
+						} catch (Exception e) {
+							Reroll2Controller.Instance.Logger.Error("Failed to generate map preview: " + e);
+							texture = null;
 						}
-					});
-					textureHandle.WaitOne(1000);
+						if (texture != null) {
+							WaitForExecutionInMainThread(() => {
+								// upload in main thread
+								texture.Apply();
+							});
+						}
+						WaitForExecutionInMainThread(() => {
+							if (texture == null) {
+								req.Promise.Reject();
+							} else {
+								req.Promise.Resolve(texture);
+							}
+						});
+					}
+				}
+			} catch (Exception e) {
+				Reroll2Controller.Instance.Logger.Error("Exception in preview generator thread: " + e);
+				if (request != null) {
+					request.Promise.Reject();
 				}
 			}
 		}
@@ -110,8 +113,19 @@ namespace Reroll2 {
 			}
 			disposeHandle.Close();
 			workHandle.Close();
-			textureHandle.Close();
-			textureHandle = disposeHandle = workHandle = null;
+			mainThreadHandle.Close();
+			mainThreadHandle = disposeHandle = workHandle = null;
+		}
+
+		/// <summary>
+		/// Block until delegate is executed or times out
+		/// </summary>
+		private void WaitForExecutionInMainThread(Action action) {
+			Reroll2Controller.Instance.ExecuteInMainThread(() => {
+				action();
+				mainThreadHandle.Set();
+			});
+			mainThreadHandle.WaitOne(1000);
 		}
 
 		private static void GeneratePreviewForSeed(string seed, int mapTile, int mapSize, Texture2D targetTexture) {
