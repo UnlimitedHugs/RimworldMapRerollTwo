@@ -147,7 +147,9 @@ namespace Reroll2 {
 				var currentMap = Find.VisibleMap;
 				var state = RerollToolbox.GetStateForMap(currentMap);
 				var seed = RerollToolbox.GetNextRerollSeed(state);
-				previewGenerator.QueuePreviewForSeed(seed, currentMap.Tile, currentMap.Size.x).Done(t => mapPreviewTex = t);
+				for (int i = 0; i < 9; i++) {
+					previewGenerator.QueuePreviewForSeed(seed+i, currentMap.Tile, currentMap.Size.x).Done(t => mapPreviewTex = t);	
+				}
 			}
 			if (mapPreviewTex != null) {
 				GUI.DrawTexture(new Rect(10, 90, 400, 400), mapPreviewTex, ScaleMode.ScaleToFit, true);

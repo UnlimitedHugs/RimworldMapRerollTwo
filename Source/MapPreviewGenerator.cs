@@ -43,12 +43,12 @@ namespace Reroll2 {
 
 		private Thread workerThread;
 		private EventWaitHandle workHandle = new AutoResetEvent(false);
-		private EventWaitHandle terminateHandle = new AutoResetEvent(false);
+		private EventWaitHandle disposeHandle = new AutoResetEvent(false);
 		private EventWaitHandle textureHandle = new AutoResetEvent(false);
 		private Queue<QueuedPreviewRequest> queuedRequests = new Queue<QueuedPreviewRequest>();
 
 		public IPromise<Texture2D> QueuePreviewForSeed(string seed, int mapTile, int mapSize) {
-			if (terminateHandle == null) {
+			if (disposeHandle == null) {
 				throw new Exception("MapPreviewGenerator has already been disposed.");
 			}
 			var promise = new Deferred<Texture2D>();
@@ -62,13 +62,14 @@ namespace Reroll2 {
 		}
 
 		private void DoThreadWork() {
-			while (queuedRequests.Count > 0 || WaitHandle.WaitAny(new WaitHandle[] { workHandle, terminateHandle }) == 0) {
-				if (queuedRequests.Count > 0) {
+			while (WaitHandle.WaitAny(new WaitHandle[] { workHandle, disposeHandle }) == 0) {
+				while (queuedRequests.Count > 0) {
 					var req = queuedRequests.Dequeue();
 					Texture2D texture = null;
 					Reroll2Controller.Instance.ExecuteInMainThread(() =>{
 						// textures must be instantiated in the main thread
 						texture = new Texture2D(req.MapSize, req.MapSize, TextureFormat.RGB24, false);
+						texture.Apply();
 						textureHandle.Set();
 					});
 					textureHandle.WaitOne(1000);
@@ -95,20 +96,22 @@ namespace Reroll2 {
 							req.Promise.Reject();
 						} else {
 							req.Promise.Resolve(texture);
+							textureHandle.Set();
 						}
 					});
+					textureHandle.WaitOne(1000);
 				}
 			}
 		}
 
 		public void Dispose() {
-			if (terminateHandle == null) {
+			if (disposeHandle == null) {
 				throw new Exception("MapPreviewGenerator has already been disposed.");
 			}
-			terminateHandle.Close();
+			disposeHandle.Close();
 			workHandle.Close();
 			textureHandle.Close();
-			textureHandle = terminateHandle = workHandle = null;
+			textureHandle = disposeHandle = workHandle = null;
 		}
 
 		private static void GeneratePreviewForSeed(string seed, int mapTile, int mapSize, Texture2D targetTexture) {
@@ -220,8 +223,6 @@ namespace Reroll2 {
 		/// Generate a minimal map with elevation and fertility grids
 		/// </summary>
 		private static MapElevationFertilityData GenerateMapGrids(int mapTile, int mapSize) {
-			var prevProgramState = Current.ProgramState;
-			Current.ProgramState = ProgramState.MapInitializing;
 			DeepProfiler.Start("generateMapPreviewGrids");
 			try {
 				var mapGeneratorData = (Dictionary<string, object>)ReflectionCache.MapGenerator_Data.GetValue(null);
@@ -244,7 +245,6 @@ namespace Reroll2 {
 				return result;
 			} finally {
 				DeepProfiler.End();
-				Current.ProgramState = prevProgramState;
 			}
 		}
 
