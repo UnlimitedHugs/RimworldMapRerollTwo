@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Harmony;
 using Promises;
 using RimWorld;
 using RimWorld.Planet;
@@ -36,25 +35,24 @@ namespace Reroll2 {
 			{"WaterOceanShallow", waterColorShallow},
 			{"WaterMovingShallow", waterColorShallow}
 		};
-
+		
 		public static IPromise<Texture2D> MakePreviewForSeed(string seed, int mapTile, int mapSize, MapGeneratorDef mapGenerator) {
 			var promise = new Deferred<Texture2D>();
+			var prevSeed = Find.World.info.seedString;
+			Find.World.info.seedString = seed;
 			LongEventHandler.ExecuteWhenFinished(() => {
-				var beachMakerType = AccessTools.TypeByName("BeachMaker");
 				try {
-					var grids = GetMapGridsFromSeed(seed, mapTile, mapSize);
+					var grids = GenerateMapGrids(mapTile, mapSize);
 					DeepProfiler.Start("generateMapPreviewTexture");
 					var terrainGenstep = new GenStep_Terrain();
-					var riverMaker = AccessTools.Method(typeof(GenStep_Terrain), "GenerateRiver").Invoke(terrainGenstep, new object[] { grids.Map });
+					var riverMaker = ReflectionCache.GenStepTerrain_GenerateRiver.Invoke(terrainGenstep, new object[] { grids.Map });
 					var tex = new Texture2D(grids.Map.Size.x, grids.Map.Size.z);
-					var beachTerrainAtDelegate =  (BeachMakerBeachTerrainAt)Delegate.CreateDelegate(typeof(BeachMakerBeachTerrainAt), null, AccessTools.Method(beachMakerType, "BeachTerrainAt"));
-					var riverTerrainAtDelegate = riverMaker == null ? null : (RiverMakerTerrainAt)Delegate.CreateDelegate(typeof(RiverMakerTerrainAt), riverMaker, AccessTools.Method(riverMaker.GetType(), "TerrainAt"));
-					AccessTools.Method(beachMakerType, "Init").Invoke(null, new object[] {grids.Map});
+					var beachTerrainAtDelegate =  (BeachMakerBeachTerrainAt)Delegate.CreateDelegate(typeof(BeachMakerBeachTerrainAt), null, ReflectionCache.BeachMaker_BeachTerrainAt);
+					var riverTerrainAtDelegate = riverMaker == null ? null : (RiverMakerTerrainAt)Delegate.CreateDelegate(typeof(RiverMakerTerrainAt), riverMaker, ReflectionCache.RiverMaker_TerrainAt);
+					ReflectionCache.BeachMaker_Init.Invoke(null, new object[] {grids.Map});
 					
 					foreach (var cell in CellRect.WholeMap(grids.Map)) {
 						const float rockCutoff = .7f;
-						//var terrainDef  = (TerrainDef)terrainFromMethod.Invoke(terrainGenstep, new[] { cell, grids.Map, grids.ElevationGrid[cell], grids.FertilityGrid[cell], riverMaker, false });
-						//var terrainDef = getTerrain(cell, grids.Map, grids.ElevationGrid[cell], grids.FertilityGrid[cell], riverMaker, false);
 						var terrainDef = TerrainFrom(cell, grids.Map, grids.ElevationGrid[cell], grids.FertilityGrid[cell], riverTerrainAtDelegate, beachTerrainAtDelegate, false);
 						Color pixelColor;
 						if (!terrainColors.TryGetValue(terrainDef.defName, out pixelColor)) {
@@ -76,7 +74,8 @@ namespace Reroll2 {
 				} finally {
 					RockNoises.Reset();
 					DeepProfiler.End();
-					AccessTools.Method(beachMakerType, "Cleanup").Invoke(null, null);
+					Find.World.info.seedString = prevSeed;
+					ReflectionCache.BeachMaker_Cleanup.Invoke(null, null);
 				}
 			});
 			return promise;
@@ -122,14 +121,12 @@ namespace Reroll2 {
 			return TerrainDefOf.Sand;
 		}
 
-		private static MapElevationFertilityData GetMapGridsFromSeed(string seed, int mapTile, int mapSize) {
+		private static MapElevationFertilityData GenerateMapGrids(int mapTile, int mapSize) {
 			var prevProgramState = Current.ProgramState;
-			var prevSeed = Find.World.info.seedString;
-			Find.World.info.seedString = seed;
 			Current.ProgramState = ProgramState.MapInitializing;
 			DeepProfiler.Start("generateMapPreviewGrids");
 			try {
-				var mapGeneratorData = Traverse.Create(typeof(MapGenerator)).Field("data").GetValue<Dictionary<string, object>>();
+				var mapGeneratorData = (Dictionary<string, object>)ReflectionCache.MapGenerator_Data.GetValue(null);
 				mapGeneratorData.Clear();
 
 				var map = CreateMapStub(mapSize, mapTile);
@@ -137,15 +134,12 @@ namespace Reroll2 {
 					terrainPatchMaker.Cleanup();
 				}
 
-				Rand.Seed = Gen.HashCombineInt(GenText.StableStringHash(seed), map.Tile);
+				Rand.Seed = Gen.HashCombineInt(Find.World.info.Seed, map.Tile);
 				RockNoises.Init(map);
 
 				var elevationFertilityGenstep = new GenStep_ElevationFertility();
 				elevationFertilityGenstep.Generate(map);
 				
-				/*var terrainGenstep = new GenStep_Terrain();
-				terrainGenstep.Generate(map);*/
-
 				var result = new MapElevationFertilityData(MapGenerator.FloatGridNamed("Elevation", map), MapGenerator.FloatGridNamed("Fertility", map), map);
 				mapGeneratorData.Clear();
 
@@ -153,7 +147,6 @@ namespace Reroll2 {
 			} finally {
 				DeepProfiler.End();
 				Current.ProgramState = prevProgramState;
-				Find.World.info.seedString = prevSeed;
 			}
 		}
 
@@ -169,19 +162,6 @@ namespace Reroll2 {
 				}
 			};
 			map.cellIndices = new CellIndices(map);
-/*			map.edificeGrid = new EdificeGrid(map);
-			map.terrainGrid = new TerrainGrid(map);
-			map.roofGrid = new RoofGrid(map);
-			map.roofCollapseBuffer = new RoofCollapseBuffer();
-			map.floodFiller = new FloodFiller(map);
-			map.mapDrawer = new MapDrawer(map);
-			map.pathGrid = new PathGrid(map);
-			map.regionGrid = new RegionGrid(map);
-			map.thingGrid = new ThingGrid(map);
-			map.reachability = new Reachability(map);
-			map.regionDirtyer = new RegionDirtyer(map);
-			map.thingGrid = new ThingGrid(map);
-			map.snowGrid = new SnowGrid(map);*/
 
 			return map;
 		}
