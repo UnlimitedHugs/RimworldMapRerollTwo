@@ -21,5 +21,9 @@
 	<setting_noVomiting_desc>Enable this to keep your colonists from vomiting all over your shiny new map.</setting_noVomiting_desc>
 	<setting_antiCheese_label>Anti-cheese</setting_antiCheese_label>
 	<setting_antiCheese_desc>When enabled, rerolling a map will destroy all things generated with the old map, except for your colonists.</setting_antiCheese_desc>
+	<setting_mapGeneratorMode_label>Map generator mode</setting_mapGeneratorMode_label>
+	<setting_mapGeneratorMode_desc>When set to "accurate previews", the map generator will produce slightly different maps than the stock game. Setting this to "original map generator" is useful if you're using a vanilla world seed to get a specific map.</setting_mapGeneratorMode_desc>
+	<setting_mapGeneratorMode_AccuratePreviews>Accurate previews</setting_mapGeneratorMode_AccuratePreviews>
+	<setting_mapGeneratorMode_OriginalGenerator>Original map generator</setting_mapGeneratorMode_OriginalGenerator>
 
 </LanguageData>

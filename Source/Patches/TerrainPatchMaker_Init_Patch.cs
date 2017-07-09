@@ -7,13 +7,12 @@ namespace Reroll2.Patches {
 	internal class TerrainPatchMaker_Init_Patch {
 		[HarmonyPrefix]
 		public static void DeterministicPatchesSetup(Map map) {
-			var deterministicSeed = Gen.HashCombineInt(GenText.StableStringHash(Find.World.info.seedString), map.Tile); 
-			Rand.PushState(deterministicSeed);
+			Reroll2Controller.Instance.TryPushDeterministicRandState(map, 2);
 		}
 
 		[HarmonyPostfix]
 		public static void DeterministicPatchesTeardown() {
-			Rand.PopState();
+			Reroll2Controller.Instance.TryPopDeterministicRandState();
 		}
 	}
 }

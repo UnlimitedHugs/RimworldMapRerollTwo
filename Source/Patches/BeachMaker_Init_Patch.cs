@@ -12,13 +12,12 @@ namespace Reroll2.Patches {
 
 		[HarmonyPrefix]
 		public static void DeterministicBeachSetup(Map map) {
-			var deterministicSeed = Gen.HashCombineInt(GenText.StableStringHash(Find.World.info.seedString), map.Tile);
-			Rand.PushState(deterministicSeed);
+			Reroll2Controller.Instance.TryPushDeterministicRandState(map, 1);
 		}
 
 		[HarmonyPostfix]
 		public static void DeterministicBeachTeardown() {
-			Rand.PopState();
+			Reroll2Controller.Instance.TryPopDeterministicRandState();
 		}
 	}
 }

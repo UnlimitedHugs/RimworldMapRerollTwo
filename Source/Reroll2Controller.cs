@@ -12,9 +12,14 @@ namespace Reroll2 {
 			Map, Geyser
 		}
 
+		public enum MapGeneratorMode {
+			AccuratePreviews, OriginalGenerator
+		}
+
 		public static Reroll2Controller Instance { get; private set; }
 		private MapGeneratorDef lastUsedMapGenerator;
 		private bool rerollInProgress;
+		private bool generatorSeedPushed;
 
 		public override string ModIdentifier {
 			get { return "Reroll2"; }
@@ -35,6 +40,7 @@ namespace Reroll2 {
 		public SettingHandle<bool> AntiCheeseSetting { get; private set; }
 		public SettingHandle<bool> LogConsumedResourcesSetting { get; private set; }
 		public SettingHandle<bool> NoVomitingSetting { get; private set; }
+		public SettingHandle<MapGeneratorMode> MapGeneratorModeSetting { get; set; }
 
 		private GeyserRerollTool geyserReroll;
 		private Texture2D mapPreviewTex;
@@ -144,6 +150,21 @@ namespace Reroll2 {
 			lastUsedMapGenerator = def;
 		}
 
+		public void TryPushDeterministicRandState(Map map, int seed) {
+			if (MapGeneratorModeSetting.Value == MapGeneratorMode.AccuratePreviews) {
+				var deterministicSeed = Gen.HashCombineInt(GenText.StableStringHash(Find.World.info.seedString+seed), map.Tile);
+				Rand.PushState(deterministicSeed);
+				generatorSeedPushed = true;
+			}
+		}
+
+		public void TryPopDeterministicRandState() {
+			if (generatorSeedPushed) {
+				generatorSeedPushed = false;
+				Rand.PopState();
+			}
+		}
+
 		private void PrepareSettingsHandles() {
 			SettingHandle.ShouldDisplay devModeVisible = () => Prefs.DevMode;
 
@@ -159,6 +180,8 @@ namespace Reroll2 {
 
 			NoVomitingSetting = Settings.GetHandle("noVomiting", "setting_noVomiting_label".Translate(), "setting_noVomiting_desc".Translate(), false);
 			NoVomitingSetting.VisibilityPredicate = devModeVisible;
+
+			MapGeneratorModeSetting = Settings.GetHandle("mapGeneratorMode", "setting_mapGeneratorMode_label".Translate(), "setting_mapGeneratorMode_desc".Translate(), MapGeneratorMode.AccuratePreviews, null, "setting_mapGeneratorMode_");
 		}
 
 		public static void OnBeforeBuildingDestroyed(Building building, DestroyMode mode) {
