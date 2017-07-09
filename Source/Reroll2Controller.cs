@@ -1,4 +1,5 @@
-﻿using HugsLib;
+﻿using System;
+using HugsLib;
 using HugsLib.Settings;
 using HugsLib.Utils;
 using UnityEngine;
@@ -44,6 +45,8 @@ namespace Reroll2 {
 
 		private GeyserRerollTool geyserReroll;
 		private Texture2D mapPreviewTex;
+		private MapPreviewGenerator previewGenerator = new MapPreviewGenerator();
+		private Action scheduledMainThreadAction;
 
 		private Reroll2Controller() {
 			Instance = this;
@@ -121,6 +124,11 @@ namespace Reroll2 {
 
 		public override void Update() {
 			if (geyserReroll != null) geyserReroll.OnUpdate();
+			if (scheduledMainThreadAction != null) {
+				var act = scheduledMainThreadAction;
+				scheduledMainThreadAction = null;
+				act();
+			}
 		}
 
 		public override void Tick(int currentTick) {
@@ -132,14 +140,14 @@ namespace Reroll2 {
 				var currentMap = Find.VisibleMap;
 				var state = RerollToolbox.GetStateForMap(currentMap);
 				var seed = state.RerollSeed ?? Find.World.info.seedString;
-				MapPreviewGenerator.MakePreviewForSeed(seed, currentMap.Tile, currentMap.Size.x).Done(t => mapPreviewTex = t);
+				previewGenerator.QueuePreviewForSeed(seed, currentMap.Tile, currentMap.Size.x).Done(t => mapPreviewTex = t);
 			}
 			
 			if (GUI.Button(new Rect(10, 50, 100, 30), "Preview next")) {
 				var currentMap = Find.VisibleMap;
 				var state = RerollToolbox.GetStateForMap(currentMap);
 				var seed = RerollToolbox.GetNextRerollSeed(state);
-				MapPreviewGenerator.MakePreviewForSeed(seed, currentMap.Tile, currentMap.Size.x).Done(t => mapPreviewTex = t);
+				previewGenerator.QueuePreviewForSeed(seed, currentMap.Tile, currentMap.Size.x).Done(t => mapPreviewTex = t);
 			}
 			if (mapPreviewTex != null) {
 				GUI.DrawTexture(new Rect(10, 90, 400, 400), mapPreviewTex, ScaleMode.ScaleToFit, true);
@@ -163,6 +171,13 @@ namespace Reroll2 {
 				generatorSeedPushed = false;
 				Rand.PopState();
 			}
+		}
+
+		public void ExecuteInMainThread(Action action) {
+			if (scheduledMainThreadAction != null) {
+				throw new Exception("Main thread action already scheduled: " + scheduledMainThreadAction);
+			}
+			scheduledMainThreadAction = action;
 		}
 
 		private void PrepareSettingsHandles() {

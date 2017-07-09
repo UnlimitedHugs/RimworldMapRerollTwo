@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using Promises;
 using RimWorld;
 using RimWorld.Planet;
@@ -10,7 +11,7 @@ namespace Reroll2 {
 	/// <summary>
 	/// Given a map location and seed, generates an approximate preview texture of how the map would look once generated.
 	/// </summary>
-	public static class MapPreviewGenerator {
+	public class MapPreviewGenerator : IDisposable {
 		private delegate TerrainDef RiverMakerTerrainAt(IntVec3 c);
 		private delegate TerrainDef BeachMakerBeachTerrainAt(IntVec3 c, BiomeDef biome);
 
@@ -39,18 +40,86 @@ namespace Reroll2 {
 			{"WaterOceanShallow", waterColorShallow},
 			{"WaterMovingShallow", waterColorShallow}
 		};
-		
-		public static IPromise<Texture2D> MakePreviewForSeed(string seed, int mapTile, int mapSize) {
+
+		private Thread workerThread;
+		private EventWaitHandle workHandle = new AutoResetEvent(false);
+		private EventWaitHandle terminateHandle = new AutoResetEvent(false);
+		private EventWaitHandle textureHandle = new AutoResetEvent(false);
+		private Queue<QueuedPreviewRequest> queuedRequests = new Queue<QueuedPreviewRequest>();
+
+		public IPromise<Texture2D> QueuePreviewForSeed(string seed, int mapTile, int mapSize) {
+			if (terminateHandle == null) {
+				throw new Exception("MapPreviewGenerator has already been disposed.");
+			}
 			var promise = new Deferred<Texture2D>();
+			if (workerThread == null) {
+				workerThread = new Thread(DoThreadWork);
+				workerThread.Start();
+			}
+			queuedRequests.Enqueue(new QueuedPreviewRequest(promise, seed, mapTile, mapSize));
+			workHandle.Set();
+			return promise;
+		}
+
+		private void DoThreadWork() {
+			while (queuedRequests.Count > 0 || WaitHandle.WaitAny(new WaitHandle[] { workHandle, terminateHandle }) == 0) {
+				if (queuedRequests.Count > 0) {
+					var req = queuedRequests.Dequeue();
+					Texture2D texture = null;
+					Reroll2Controller.Instance.ExecuteInMainThread(() =>{
+						// textures must be instantiated in the main thread
+						texture = new Texture2D(req.MapSize, req.MapSize, TextureFormat.RGB24, false);
+						textureHandle.Set();
+					});
+					textureHandle.WaitOne(1000);
+					
+					try {
+						if (texture == null) {
+							throw new Exception("Could not create required texture.");
+						}
+						GeneratePreviewForSeed(req.Seed, req.MapTile, req.MapSize, texture);
+					} catch (Exception e) {
+						Reroll2Controller.Instance.Logger.Error("Failed to generate map preview: " + e);
+						texture = null;
+					}
+					if (texture != null) {
+						Reroll2Controller.Instance.ExecuteInMainThread(() => {
+							// upload in main thread
+							texture.Apply();
+							textureHandle.Set();
+						});
+						textureHandle.WaitOne(1000);
+					}
+					Reroll2Controller.Instance.ExecuteInMainThread(() => {
+						if (texture == null) {
+							req.Promise.Reject();
+						} else {
+							req.Promise.Resolve(texture);
+						}
+					});
+				}
+			}
+		}
+
+		public void Dispose() {
+			if (terminateHandle == null) {
+				throw new Exception("MapPreviewGenerator has already been disposed.");
+			}
+			terminateHandle.Close();
+			workHandle.Close();
+			textureHandle.Close();
+			textureHandle = terminateHandle = workHandle = null;
+		}
+
+		private static void GeneratePreviewForSeed(string seed, int mapTile, int mapSize, Texture2D targetTexture) {
 			var prevSeed = Find.World.info.seedString;
 			Find.World.info.seedString = seed;
-			LongEventHandler.ExecuteWhenFinished(() => {
+			
 				try {
 					var grids = GenerateMapGrids(mapTile, mapSize);
 					DeepProfiler.Start("generateMapPreviewTexture");
 					var terrainGenstep = new GenStep_Terrain();
 					var riverMaker = ReflectionCache.GenStepTerrain_GenerateRiver.Invoke(terrainGenstep, new object[] { grids.Map });
-					var tex = new Texture2D(grids.Map.Size.x, grids.Map.Size.z);
 					var beachTerrainAtDelegate =  (BeachMakerBeachTerrainAt)Delegate.CreateDelegate(typeof(BeachMakerBeachTerrainAt), null, ReflectionCache.BeachMaker_BeachTerrainAt);
 					var riverTerrainAtDelegate = riverMaker == null ? null : (RiverMakerTerrainAt)Delegate.CreateDelegate(typeof(RiverMakerTerrainAt), riverMaker, ReflectionCache.RiverMaker_TerrainAt);
 					ReflectionCache.BeachMaker_Init.Invoke(null, new object[] {grids.Map});
@@ -66,27 +135,20 @@ namespace Reroll2 {
 						if (grids.ElevationGrid[cell] > rockCutoff) {
 							pixelColor = solidStoneColor;
 						}
-						tex.SetPixel(cell.x, cell.z, pixelColor);
+						targetTexture.SetPixel(cell.x, cell.z, pixelColor);
 					}
 
-					AddBevelToSolidStone(tex);
-
-					tex.Apply();
+					AddBevelToSolidStone(targetTexture);
+					
 					foreach (var terrainPatchMaker in grids.Map.Biome.terrainPatchMakers) {
 						terrainPatchMaker.Cleanup();
 					}
-					promise.Resolve(tex);
-				} catch (Exception e) {
-					Reroll2Controller.Instance.Logger.Error("Failed to generate map preview: "+e);
-					promise.Reject();
 				} finally {
 					RockNoises.Reset();
 					DeepProfiler.End();
 					Find.World.info.seedString = prevSeed;
 					ReflectionCache.BeachMaker_Cleanup.Invoke(null, null);
 				}
-			});
-			return promise;
 		}
 
 		/// <summary>
@@ -211,6 +273,20 @@ namespace Reroll2 {
 				ElevationGrid = elevationGrid;
 				FertilityGrid = fertilityGrid;
 				Map = map;
+			}
+		}
+
+		private class QueuedPreviewRequest {
+			public readonly Deferred<Texture2D> Promise;
+			public readonly string Seed;
+			public readonly int MapTile;
+			public readonly int MapSize;
+
+			public QueuedPreviewRequest(Deferred<Texture2D> promise, string seed, int mapTile, int mapSize) {
+				Promise = promise;
+				Seed = seed;
+				MapTile = mapTile;
+				MapSize = mapSize;
 			}
 		}
 	}

@@ -21,6 +21,7 @@ namespace Reroll2 {
 		public static FieldInfo Scenario_Parts { get; private set; }
 		public static FieldInfo CreateIncident_IsFinished { get; private set; }
 		public static FieldInfo MapGenerator_Data { get; private set; }
+		
 		public static MethodInfo GenStepTerrain_GenerateRiver { get; private set; }
 		public static MethodInfo BeachMaker_Init { get; private set; }
 		public static MethodInfo BeachMaker_Cleanup { get; private set; }
