@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <DefPackage-SoundDef>
-	
+
 	<SoundDef>
 		<defName>RerollSteamVent</defName>
 		<context>MapOnly</context>
@@ -29,9 +29,9 @@
 			</li>	  
 		</subSounds>
 	</SoundDef>
-	
+
 	<SoundDef>
-		<defName>RerollThunderClap</defName>  
+		<defName>RerollDiceRoll</defName>  
 		<eventNames />	
 		<maxVoices>1</maxVoices>   
 		<maxSimultaneous>1</maxSimultaneous>  
@@ -40,70 +40,16 @@
 				<onCamera>True</onCamera>  
 				<grains>
 					<li Class="AudioGrain_Clip">
-						<clipPath>thunderClap</clipPath>
+						<clipPath>dice_roll</clipPath>
 					</li>
 				</grains>	  
 				<volumeRange>
-					<min>200</min>
-					<max>250</max>
+					<min>90</min>
+					<max>100</max>
 				</volumeRange>
 				<pitchRange>
 					<min>0.9</min>		
 					<max>1.1</max>
-				</pitchRange>
-			</li>	  
-		</subSounds>
-	</SoundDef>
-	
-	<SoundDef>
-		<defName>RerollMonumentStartup</defName>
-		<context>MapOnly</context>
-		<eventNames />	
-		<maxVoices>1</maxVoices>   
-		<maxSimultaneous>1</maxSimultaneous>  
-		<subSounds>
-			<li>
-				<grains>
-					<li Class="AudioGrain_Clip">
-						<clipPath>monumentStartup</clipPath>
-					</li>
-				</grains>	  
-				<volumeRange>
-					<min>400</min>
-					<max>500</max>
-				</volumeRange>
-				<pitchRange>
-					<min>0.9</min>		
-					<max>1.1</max>
-				</pitchRange>
-			</li>	  
-		</subSounds>
-	</SoundDef>
-	
-	<SoundDef>
-		<defName>RerollMonumentDrone</defName>  
-		<eventNames />	
-		<maxVoices>4</maxVoices>   
-		<maxSimultaneous>4</maxSimultaneous> 
-		<sustain>true</sustain>
-		<context>MapOnly</context>
-		<priorityMode>PrioritizeNearest</priorityMode> 
-		<subSounds>
-			<li>
-				<onCamera>False</onCamera>  
-				<grains>
-					<li Class="AudioGrain_Clip">
-						<clipPath>monumentDroneLoop</clipPath>
-					</li>
-				</grains>	  
-				<muteWhenPaused>true</muteWhenPaused>
-				<volumeRange>
-					<min>1000</min>
-					<max>1000</max>
-				</volumeRange>
-				<pitchRange>
-					<min>1</min>		
-					<max>1</max>
 				</pitchRange>
 			</li>	  
 		</subSounds>

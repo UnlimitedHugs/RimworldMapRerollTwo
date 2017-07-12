@@ -11,14 +11,12 @@ namespace Reroll2 {
 	public static class Resources {
 		[DefOf]
 		public static class Thing {
-			public static ThingDef RerollMonument;
 		}
 
 		[DefOf]
 		public static class Sound {
 			public static SoundDef RerollSteamVent;
-			public static SoundDef RerollMonumentStartup;
-			public static SoundDef RerollMonumentDrone;
+			public static SoundDef RerollDiceRoll;
 		}
 		
 		[DefOf]

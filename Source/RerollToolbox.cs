@@ -58,8 +58,6 @@ namespace Reroll2 {
 					Current.Game.InitData = null;
 				}
 				
-				InvokeOnRerollEventReceivers(newMap, receiver => receiver.OnMapStateSet());
-
 				if (!isOnStartingTile) {
 					SpawnPawnsOnMap(playerPawns, newMap);
 				}
@@ -162,28 +160,13 @@ namespace Reroll2 {
 			ReduceMapResources(map, percent, rerollState.ResourceBalance);
 			rerollState.ResourceBalance = Mathf.Clamp(rerollState.ResourceBalance - percent, 0f, 100f);
 		}
-
-		public static void InvokeOnRerollEventReceivers(Map map, Action<IRerollEventReceiver> action) {
-			if (map.listerBuildings == null) return;
-			var allThings = map.listerThings.AllThings;
-			for (var i = 0; i < allThings.Count; i++) {
-				var receiver = allThings[i] as IRerollEventReceiver;
-				if (receiver != null) {
-					action(receiver);
-				}
-			}
-		}
-
+		
 		public static void ResetIncidentScenarioParts(Scenario scenario) {
 			foreach (var part in scenario.AllParts) {
 				if (part != null && part.GetType() == ReflectionCache.ScenPartCreateIncidentType) {
 					ReflectionCache.CreateIncident_IsFinished.SetValue(part, false);
 				}
 			}
-		}
-
-		public static void ReceiveMonumentDeactivationLetter(Building_Monument monument) {
-			Find.LetterStack.ReceiveLetter("Reroll2_deactivationLetter".Translate(), "Reroll2_deactivationLetter_text".Translate(), LetterDefOf.BadNonUrgent, monument);
 		}
 
 		/// <summary>

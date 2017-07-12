@@ -61,17 +61,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Source\BuildingProperties_Monument.cs" />
-    <Compile Include="Source\Building_Monument.cs" />
-    <Compile Include="Source\UI\Widget_ResourceBalance.cs" />
-    <Compile Include="Source\UI\Gizmo_ResourceBalance.cs" />
-    <Compile Include="Source\GraphicData_Monument.cs" />
-    <Compile Include="Source\Graphic_Monument.cs" />
-    <Compile Include="Source\GenStep_Monument.cs" />
-    <Compile Include="Source\IRerollEventReceiver.cs" />
     <Compile Include="Source\MapPreviewGenerator.cs" />
     <Compile Include="Source\Patches\BeachMaker_Init_Patch.cs" />
-    <Compile Include="Source\Patches\Building_Destroy_Patch.cs" />
     <Compile Include="Source\Patches\TerrainPatchMaker_Init_Patch.cs" />
     <Compile Include="Source\Promises\EnumerableExt.cs" />
     <Compile Include="Source\Promises\IPromise.cs" />
@@ -79,6 +70,7 @@
     <Compile Include="Source\RerollSettingsDef.cs" />
     <Compile Include="Source\ReflectionCache.cs" />
     <Compile Include="Source\UI\MainTabWindow_Reroll.cs" />
+    <Compile Include="Source\UI\Widget_ResourceBalance.cs" />
     <Compile Include="Source\ValueInterpolator.cs" />
     <Compile Include="Source\InterpolationCurves.cs" />
     <Compile Include="Source\RerollToolbox.cs" />

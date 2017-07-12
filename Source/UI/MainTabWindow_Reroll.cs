@@ -1,4 +1,5 @@
 ﻿using System;
+using HugsLib.Utils;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -32,7 +33,6 @@ namespace Reroll2.UI {
 			base.PreOpen();
 			var map = Find.VisibleMap;
 			var resourceBalance = map == null ? 0f : RerollToolbox.GetStateForMap(map).ResourceBalance;
-			Log.Message(resourceBalance+" "+map);
 			balanceWidget = new Widget_ResourceBalance(resourceBalance);
 		}
 
