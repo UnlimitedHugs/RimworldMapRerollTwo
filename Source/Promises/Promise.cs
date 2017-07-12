@@ -2,35 +2,36 @@
 using System.Collections.Generic;
 using System.Linq;
 
+// Swiped from https://github.com/Real-Serious-Games/C-Sharp-Promise
 namespace Reroll2.Promises {
 	/// <summary>
-	///     Implements a non-generic C# promise, this is a promise that simply resolves without delivering a value.
+	///     Implements a C# promise.
 	///     https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise
 	/// </summary>
-	public interface IPromise {
+	public interface IPromise<PromisedT> {
 		/// <summary>
-		///     ID of the promise, useful for debugging.
+		///     Gets the id of the promise, useful for referencing the promise during runtime.
 		/// </summary>
 		int Id { get; }
 
 		/// <summary>
 		///     Set the name of the promise, useful for debugging.
 		/// </summary>
-		IPromise WithName(string name);
+		IPromise<PromisedT> WithName(string name);
 
 		/// <summary>
 		///     Completes the promise.
 		///     onResolved is called on successful completion.
 		///     onRejected is called on error.
 		/// </summary>
-		void Done(Action onResolved, Action<Exception> onRejected);
+		void Done(Action<PromisedT> onResolved, Action<Exception> onRejected);
 
 		/// <summary>
 		///     Completes the promise.
 		///     onResolved is called on successful completion.
 		///     Adds a default error handler.
 		/// </summary>
-		void Done(Action onResolved);
+		void Done(Action<PromisedT> onResolved);
 
 		/// <summary>
 		///     Complete the promise. Adds a default error handler.
@@ -40,46 +41,60 @@ namespace Reroll2.Promises {
 		/// <summary>
 		///     Handle errors for the promise.
 		/// </summary>
-		IPromise Catch(Action<Exception> onRejected);
+		IPromise<PromisedT> Catch(Action<Exception> onRejected);
 
 		/// <summary>
 		///     Add a resolved callback that chains a value promise (optionally converting to a different value type).
 		/// </summary>
-		IPromise<ConvertedT> Then<ConvertedT>(Func<IPromise<ConvertedT>> onResolved);
+		IPromise<ConvertedT> Then<ConvertedT>(Func<PromisedT, IPromise<ConvertedT>> onResolved);
 
 		/// <summary>
 		///     Add a resolved callback that chains a non-value promise.
 		/// </summary>
-		IPromise Then(Func<IPromise> onResolved);
+		IPromise Then(Func<PromisedT, IPromise> onResolved);
 
 		/// <summary>
 		///     Add a resolved callback.
 		/// </summary>
-		IPromise Then(Action onResolved);
+		IPromise<PromisedT> Then(Action<PromisedT> onResolved);
 
 		/// <summary>
 		///     Add a resolved callback and a rejected callback.
 		///     The resolved callback chains a value promise (optionally converting to a different value type).
 		/// </summary>
-		IPromise<ConvertedT> Then<ConvertedT>(Func<IPromise<ConvertedT>> onResolved, Action<Exception> onRejected);
+		IPromise<ConvertedT> Then<ConvertedT>(Func<PromisedT, IPromise<ConvertedT>> onResolved, Action<Exception> onRejected);
 
 		/// <summary>
 		///     Add a resolved callback and a rejected callback.
 		///     The resolved callback chains a non-value promise.
 		/// </summary>
-		IPromise Then(Func<IPromise> onResolved, Action<Exception> onRejected);
+		IPromise Then(Func<PromisedT, IPromise> onResolved, Action<Exception> onRejected);
 
 		/// <summary>
 		///     Add a resolved callback and a rejected callback.
 		/// </summary>
-		IPromise Then(Action onResolved, Action<Exception> onRejected);
+		IPromise<PromisedT> Then(Action<PromisedT> onResolved, Action<Exception> onRejected);
+
+		/// <summary>
+		///     Return a new promise with a different value.
+		///     May also change the type of the value.
+		/// </summary>
+		IPromise<ConvertedT> Then<ConvertedT>(Func<PromisedT, ConvertedT> transform);
+
+		/// <summary>
+		///     Return a new promise with a different value.
+		///     May also change the type of the value.
+		/// </summary>
+		[Obsolete("Use Then instead")]
+		IPromise<ConvertedT> Transform<ConvertedT>(Func<PromisedT, ConvertedT> transform);
 
 		/// <summary>
 		///     Chain an enumerable of promises, all of which must resolve.
+		///     Returns a promise for a collection of the resolved results.
 		///     The resulting promise is resolved when all of the promises have resolved.
 		///     It is rejected as soon as any of the promises have been rejected.
 		/// </summary>
-		IPromise ThenAll(Func<IEnumerable<IPromise>> chain);
+		IPromise<IEnumerable<ConvertedT>> ThenAll<ConvertedT>(Func<PromisedT, IEnumerable<IPromise<ConvertedT>>> chain);
 
 		/// <summary>
 		///     Chain an enumerable of promises, all of which must resolve.
@@ -87,28 +102,22 @@ namespace Reroll2.Promises {
 		///     The resulting promise is resolved when all of the promises have resolved.
 		///     It is rejected as soon as any of the promises have been rejected.
 		/// </summary>
-		IPromise<IEnumerable<ConvertedT>> ThenAll<ConvertedT>(Func<IEnumerable<IPromise<ConvertedT>>> chain);
-
-		/// <summary>
-		///     Chain a sequence of operations using promises.
-		///     Reutrn a collection of functions each of which starts an async operation and yields a promise.
-		///     Each function will be called and each promise resolved in turn.
-		///     The resulting promise is resolved after each promise is resolved in sequence.
-		/// </summary>
-		IPromise ThenSequence(Func<IEnumerable<Func<IPromise>>> chain);
+		IPromise ThenAll(Func<PromisedT, IEnumerable<IPromise>> chain);
 
 		/// <summary>
 		///     Takes a function that yields an enumerable of promises.
 		///     Returns a promise that resolves when the first of the promises has resolved.
+		///     Yields the value from the first promise that has resolved.
 		/// </summary>
-		IPromise ThenRace(Func<IEnumerable<IPromise>> chain);
+		IPromise<ConvertedT> ThenRace<ConvertedT>(Func<PromisedT, IEnumerable<IPromise<ConvertedT>>> chain);
 
 		/// <summary>
 		///     Takes a function that yields an enumerable of promises.
-		///     Converts to a value promise.
+		///     Converts to a non-value promise.
 		///     Returns a promise that resolves when the first of the promises has resolved.
+		///     Yields the value from the first promise that has resolved.
 		/// </summary>
-		IPromise<ConvertedT> ThenRace<ConvertedT>(Func<IEnumerable<IPromise<ConvertedT>>> chain);
+		IPromise ThenRace(Func<PromisedT, IEnumerable<IPromise>> chain);
 
 		/// <summary>
 		///     Add a finally callback.
@@ -117,7 +126,8 @@ namespace Reroll2.Promises {
 		IPromise Finally(Action onComplete);
 
 		/// <summary>
-		///     Add a finally callback that chains a non-value promise.
+		///     Add a finally callback.
+		///     Finally callbacks will always be called, even if any preceding promise is rejected, or encounters an error.
 		/// </summary>
 		IPromise Finally(Func<IPromise> onResolved);
 
@@ -129,9 +139,19 @@ namespace Reroll2.Promises {
 	}
 
 	/// <summary>
+	///     Interface for a promise that can be rejected.
+	/// </summary>
+	public interface IRejectable {
+		/// <summary>
+		///     Reject the promise with an exception.
+		/// </summary>
+		void Reject(Exception ex);
+	}
+
+	/// <summary>
 	///     Interface for a promise that can be rejected or resolved.
 	/// </summary>
-	public interface IPendingPromise : IRejectable {
+	public interface IPendingPromise<PromisedT> : IRejectable {
 		/// <summary>
 		///     ID of the promise, useful for debugging.
 		/// </summary>
@@ -140,76 +160,25 @@ namespace Reroll2.Promises {
 		/// <summary>
 		///     Resolve the promise with a particular value.
 		/// </summary>
-		void Resolve();
+		void Resolve(PromisedT value);
 	}
 
 	/// <summary>
-	///     Used to list information of pending promises.
+	///     Specifies the state of a promise.
 	/// </summary>
-	public interface IPromiseInfo {
-		/// <summary>
-		///     Id of the promise.
-		/// </summary>
-		int Id { get; }
-
-		/// <summary>
-		///     Human-readable name for the promise.
-		/// </summary>
-		string Name { get; }
+	public enum PromiseState {
+		Pending, // The promise is in-flight.
+		Rejected, // The promise has been rejected.
+		Resolved // The promise has been resolved.
 	}
 
 	/// <summary>
-	///     Arguments to the UnhandledError event.
-	/// </summary>
-	public class ExceptionEventArgs : EventArgs {
-		internal ExceptionEventArgs(Exception exception) {
-			//            Argument.NotNull(() => exception);
-
-			Exception = exception;
-		}
-
-		public Exception Exception { get; private set; }
-	}
-
-	/// <summary>
-	///     Represents a handler invoked when the promise is rejected.
-	/// </summary>
-	public struct RejectHandler {
-		/// <summary>
-		///     Callback fn.
-		/// </summary>
-		public Action<Exception> callback;
-
-		/// <summary>
-		///     The promise that is rejected when there is an error while invoking the handler.
-		/// </summary>
-		public IRejectable rejectable;
-	}
-
-	/// <summary>
-	///     Implements a non-generic C# promise, this is a promise that simply resolves without delivering a value.
+	///     Implements a C# promise.
 	///     https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Promise
 	/// </summary>
-	public class Promise : IPromise, IPendingPromise, IPromiseInfo {
+	public class Promise<PromisedT> : IPromise<PromisedT>, IPendingPromise<PromisedT>, IPromiseInfo {
 		/// <summary>
-		///     Set to true to enable tracking of promises.
-		/// </summary>
-		public static bool EnablePromiseTracking = false;
-
-		private static EventHandler<ExceptionEventArgs> unhandlerException;
-
-		/// <summary>
-		///     Id for the next promise that is created.
-		/// </summary>
-		private static int nextPromiseId;
-
-		/// <summary>
-		///     Information about pending promises.
-		/// </summary>
-		internal static HashSet<IPromiseInfo> pendingPromises = new HashSet<IPromiseInfo>();
-
-		/// <summary>
-		///     Error handlers.
+		///     Error handler.
 		/// </summary>
 		private List<RejectHandler> rejectHandlers;
 
@@ -219,25 +188,34 @@ namespace Reroll2.Promises {
 		private Exception rejectionException;
 
 		/// <summary>
-		///     Completed handlers that accept no value.
+		///     Completed handlers that accept a value.
 		/// </summary>
-		private List<ResolveHandler> resolveHandlers;
+		private List<Action<PromisedT>> resolveCallbacks;
+
+		private List<IRejectable> resolveRejectables;
+
+		/// <summary>
+		///     The value when the promises is resolved.
+		/// </summary>
+		private PromisedT resolveValue;
 
 		public Promise() {
 			CurState = PromiseState.Pending;
-			Id = NextId();
-			if (EnablePromiseTracking) pendingPromises.Add(this);
+			Id = Promise.NextId();
+
+			if (Promise.EnablePromiseTracking) Promise.pendingPromises.Add(this);
 		}
 
-		public Promise(Action<Action, Action<Exception>> resolver) {
+		public Promise(Action<Action<PromisedT>, Action<Exception>> resolver) {
 			CurState = PromiseState.Pending;
-			Id = NextId();
-			if (EnablePromiseTracking) pendingPromises.Add(this);
+			Id = Promise.NextId();
+
+			if (Promise.EnablePromiseTracking) Promise.pendingPromises.Add(this);
 
 			try {
 				resolver(
 					// Resolve
-					() => Resolve(),
+					value => Resolve(value),
 
 					// Reject
 					ex => Reject(ex)
@@ -265,25 +243,25 @@ namespace Reroll2.Promises {
 			rejectionException = ex;
 			CurState = PromiseState.Rejected;
 
-			if (EnablePromiseTracking) pendingPromises.Remove(this);
+			if (Promise.EnablePromiseTracking) Promise.pendingPromises.Remove(this);
 
 			InvokeRejectHandlers(ex);
 		}
 
-
 		/// <summary>
 		///     Resolve the promise with a particular value.
 		/// </summary>
-		public void Resolve() {
+		public void Resolve(PromisedT value) {
 			if (CurState != PromiseState.Pending)
 				throw new ApplicationException("Attempt to resolve a promise that is already in state: " + CurState + ", a promise can only be resolved when it is still in state: " +
 												PromiseState.Pending);
 
+			resolveValue = value;
 			CurState = PromiseState.Resolved;
 
-			if (EnablePromiseTracking) pendingPromises.Remove(this);
+			if (Promise.EnablePromiseTracking) Promise.pendingPromises.Remove(this);
 
-			InvokeResolveHandlers();
+			InvokeResolveHandlers(value);
 		}
 
 		/// <summary>
@@ -296,10 +274,10 @@ namespace Reroll2.Promises {
 		///     onResolved is called on successful completion.
 		///     onRejected is called on error.
 		/// </summary>
-		public void Done(Action onResolved, Action<Exception> onRejected) {
+		public void Done(Action<PromisedT> onResolved, Action<Exception> onRejected) {
 			Then(onResolved, onRejected)
 				.Catch(ex =>
-					PropagateUnhandledException(this, ex)
+					Promise.PropagateUnhandledException(this, ex)
 				);
 		}
 
@@ -308,26 +286,26 @@ namespace Reroll2.Promises {
 		///     onResolved is called on successful completion.
 		///     Adds a default error handler.
 		/// </summary>
-		public void Done(Action onResolved) {
+		public void Done(Action<PromisedT> onResolved) {
 			Then(onResolved)
 				.Catch(ex =>
-					PropagateUnhandledException(this, ex)
+					Promise.PropagateUnhandledException(this, ex)
 				);
 		}
 
 		/// <summary>
-		///     Complete the promise. Adds a defualt error handler.
+		///     Complete the promise. Adds a default error handler.
 		/// </summary>
 		public void Done() {
 			Catch(ex =>
-				PropagateUnhandledException(this, ex)
+				Promise.PropagateUnhandledException(this, ex)
 			);
 		}
 
 		/// <summary>
 		///     Set the name of the promise, useful for debugging.
 		/// </summary>
-		public IPromise WithName(string name) {
+		public IPromise<PromisedT> WithName(string name) {
 			Name = name;
 			return this;
 		}
@@ -335,13 +313,13 @@ namespace Reroll2.Promises {
 		/// <summary>
 		///     Handle errors for the promise.
 		/// </summary>
-		public IPromise Catch(Action<Exception> onRejected) {
+		public IPromise<PromisedT> Catch(Action<Exception> onRejected) {
 			//            Argument.NotNull(() => onRejected);
 
-			var resultPromise = new Promise();
+			var resultPromise = new Promise<PromisedT>();
 			resultPromise.WithName(Name);
 
-			Action resolveHandler = () => { resultPromise.Resolve(); };
+			Action<PromisedT> resolveHandler = v => { resultPromise.Resolve(v); };
 
 			Action<Exception> rejectHandler = ex => {
 				onRejected(ex);
@@ -357,21 +335,21 @@ namespace Reroll2.Promises {
 		/// <summary>
 		///     Add a resolved callback that chains a value promise (optionally converting to a different value type).
 		/// </summary>
-		public IPromise<ConvertedT> Then<ConvertedT>(Func<IPromise<ConvertedT>> onResolved) {
+		public IPromise<ConvertedT> Then<ConvertedT>(Func<PromisedT, IPromise<ConvertedT>> onResolved) {
 			return Then(onResolved, null);
 		}
 
 		/// <summary>
 		///     Add a resolved callback that chains a non-value promise.
 		/// </summary>
-		public IPromise Then(Func<IPromise> onResolved) {
+		public IPromise Then(Func<PromisedT, IPromise> onResolved) {
 			return Then(onResolved, null);
 		}
 
 		/// <summary>
 		///     Add a resolved callback.
 		/// </summary>
-		public IPromise Then(Action onResolved) {
+		public IPromise<PromisedT> Then(Action<PromisedT> onResolved) {
 			return Then(onResolved, null);
 		}
 
@@ -379,16 +357,16 @@ namespace Reroll2.Promises {
 		///     Add a resolved callback and a rejected callback.
 		///     The resolved callback chains a value promise (optionally converting to a different value type).
 		/// </summary>
-		public IPromise<ConvertedT> Then<ConvertedT>(Func<IPromise<ConvertedT>> onResolved, Action<Exception> onRejected) {
+		public IPromise<ConvertedT> Then<ConvertedT>(Func<PromisedT, IPromise<ConvertedT>> onResolved, Action<Exception> onRejected) {
 			// This version of the function must supply an onResolved.
 			// Otherwise there is now way to get the converted value to pass to the resulting promise.
-			//            Argument.NotNull(() => onResolved);
+			//            Argument.NotNull(() => onResolved); 
 
 			var resultPromise = new Promise<ConvertedT>();
 			resultPromise.WithName(Name);
 
-			Action resolveHandler = () => {
-				onResolved()
+			Action<PromisedT> resolveHandler = v => {
+				onResolved(v)
 					.Then(
 						// Should not be necessary to specify the arg type on the next line, but Unity (mono) has an internal compiler error otherwise.
 						chainedValue => resultPromise.Resolve(chainedValue),
@@ -411,13 +389,13 @@ namespace Reroll2.Promises {
 		///     Add a resolved callback and a rejected callback.
 		///     The resolved callback chains a non-value promise.
 		/// </summary>
-		public IPromise Then(Func<IPromise> onResolved, Action<Exception> onRejected) {
+		public IPromise Then(Func<PromisedT, IPromise> onResolved, Action<Exception> onRejected) {
 			var resultPromise = new Promise();
 			resultPromise.WithName(Name);
 
-			Action resolveHandler = () => {
+			Action<PromisedT> resolveHandler = v => {
 				if (onResolved != null)
-					onResolved()
+					onResolved(v)
 						.Then(
 							() => resultPromise.Resolve(),
 							ex => resultPromise.Reject(ex)
@@ -439,14 +417,14 @@ namespace Reroll2.Promises {
 		/// <summary>
 		///     Add a resolved callback and a rejected callback.
 		/// </summary>
-		public IPromise Then(Action onResolved, Action<Exception> onRejected) {
-			var resultPromise = new Promise();
+		public IPromise<PromisedT> Then(Action<PromisedT> onResolved, Action<Exception> onRejected) {
+			var resultPromise = new Promise<PromisedT>();
 			resultPromise.WithName(Name);
 
-			Action resolveHandler = () => {
-				if (onResolved != null) onResolved();
+			Action<PromisedT> resolveHandler = v => {
+				if (onResolved != null) onResolved(v);
 
-				resultPromise.Resolve();
+				resultPromise.Resolve(v);
 			};
 
 			Action<Exception> rejectHandler = ex => {
@@ -461,12 +439,32 @@ namespace Reroll2.Promises {
 		}
 
 		/// <summary>
+		///     Return a new promise with a different value.
+		///     May also change the type of the value.
+		/// </summary>
+		public IPromise<ConvertedT> Then<ConvertedT>(Func<PromisedT, ConvertedT> transform) {
+			//            Argument.NotNull(() => transform);
+			return Then(value => Promise<ConvertedT>.Resolved(transform(value)));
+		}
+
+		/// <summary>
+		///     Return a new promise with a different value.
+		///     May also change the type of the value.
+		/// </summary>
+		[Obsolete("Use Then instead")]
+		public IPromise<ConvertedT> Transform<ConvertedT>(Func<PromisedT, ConvertedT> transform) {
+			//            Argument.NotNull(() => transform);
+			return Then(value => Promise<ConvertedT>.Resolved(transform(value)));
+		}
+
+		/// <summary>
 		///     Chain an enumerable of promises, all of which must resolve.
+		///     Returns a promise for a collection of the resolved results.
 		///     The resulting promise is resolved when all of the promises have resolved.
 		///     It is rejected as soon as any of the promises have been rejected.
 		/// </summary>
-		public IPromise ThenAll(Func<IEnumerable<IPromise>> chain) {
-			return Then(() => All(chain()));
+		public IPromise<IEnumerable<ConvertedT>> ThenAll<ConvertedT>(Func<PromisedT, IEnumerable<IPromise<ConvertedT>>> chain) {
+			return Then(value => Promise<ConvertedT>.All(chain(value)));
 		}
 
 		/// <summary>
@@ -475,42 +473,34 @@ namespace Reroll2.Promises {
 		///     The resulting promise is resolved when all of the promises have resolved.
 		///     It is rejected as soon as any of the promises have been rejected.
 		/// </summary>
-		public IPromise<IEnumerable<ConvertedT>> ThenAll<ConvertedT>(Func<IEnumerable<IPromise<ConvertedT>>> chain) {
-			return Then(() => Promise<ConvertedT>.All(chain()));
-		}
-
-		/// <summary>
-		///     Chain a sequence of operations using promises.
-		///     Reutrn a collection of functions each of which starts an async operation and yields a promise.
-		///     Each function will be called and each promise resolved in turn.
-		///     The resulting promise is resolved after each promise is resolved in sequence.
-		/// </summary>
-		public IPromise ThenSequence(Func<IEnumerable<Func<IPromise>>> chain) {
-			return Then(() => Sequence(chain()));
+		public IPromise ThenAll(Func<PromisedT, IEnumerable<IPromise>> chain) {
+			return Then(value => Promise.All(chain(value)));
 		}
 
 		/// <summary>
 		///     Takes a function that yields an enumerable of promises.
 		///     Returns a promise that resolves when the first of the promises has resolved.
+		///     Yields the value from the first promise that has resolved.
 		/// </summary>
-		public IPromise ThenRace(Func<IEnumerable<IPromise>> chain) {
-			return Then(() => Race(chain()));
+		public IPromise<ConvertedT> ThenRace<ConvertedT>(Func<PromisedT, IEnumerable<IPromise<ConvertedT>>> chain) {
+			return Then(value => Promise<ConvertedT>.Race(chain(value)));
 		}
 
 		/// <summary>
 		///     Takes a function that yields an enumerable of promises.
-		///     Converts to a value promise.
+		///     Converts to a non-value promise.
 		///     Returns a promise that resolves when the first of the promises has resolved.
+		///     Yields the value from the first promise that has resolved.
 		/// </summary>
-		public IPromise<ConvertedT> ThenRace<ConvertedT>(Func<IEnumerable<IPromise<ConvertedT>>> chain) {
-			return Then(() => Promise<ConvertedT>.Race(chain()));
+		public IPromise ThenRace(Func<PromisedT, IEnumerable<IPromise>> chain) {
+			return Then(value => Promise.Race(chain(value)));
 		}
 
 		public IPromise Finally(Action onComplete) {
 			var promise = new Promise();
 			promise.WithName(Name);
 
-			Then(() => { promise.Resolve(); });
+			Then(x => { promise.Resolve(); });
 			Catch(e => { promise.Resolve(); });
 
 			return promise.Then(onComplete);
@@ -520,7 +510,7 @@ namespace Reroll2.Promises {
 			var promise = new Promise();
 			promise.WithName(Name);
 
-			Then(() => { promise.Resolve(); });
+			Then(x => { promise.Resolve(); });
 			Catch(e => { promise.Resolve(); });
 
 			return promise.Then(onComplete);
@@ -530,10 +520,10 @@ namespace Reroll2.Promises {
 			var promise = new Promise();
 			promise.WithName(Name);
 
-			Then(() => { promise.Resolve(); });
+			Then(x => { promise.Resolve(); });
 			Catch(e => { promise.Resolve(); });
 
-			return promise.Then(() => { return onComplete(); });
+			return promise.Then(onComplete);
 		}
 
 		/// <summary>
@@ -542,76 +532,35 @@ namespace Reroll2.Promises {
 		public string Name { get; private set; }
 
 		/// <summary>
-		///     Event raised for unhandled errors.
-		///     For this to work you have to complete your promises with a call to Done().
-		/// </summary>
-		public static event EventHandler<ExceptionEventArgs> UnhandledException {
-			add { unhandlerException += value; }
-			remove { unhandlerException -= value; }
-		}
-
-		/// <summary>
-		///     Information about pending promises, useful for debugging.
-		///     This is only populated when 'EnablePromiseTracking' is set to true.
-		/// </summary>
-		public static IEnumerable<IPromiseInfo> GetPendingPromises() {
-			return pendingPromises;
-		}
-
-		/// <summary>
-		///     Increments the ID counter and gives us the ID for the next promise.
-		/// </summary>
-		internal static int NextId() {
-			return ++nextPromiseId;
-		}
-
-		/// <summary>
 		///     Add a rejection handler for this promise.
 		/// </summary>
 		private void AddRejectHandler(Action<Exception> onRejected, IRejectable rejectable) {
 			if (rejectHandlers == null) rejectHandlers = new List<RejectHandler>();
 
-			rejectHandlers.Add(new RejectHandler {
-				callback = onRejected,
-				rejectable = rejectable
-			});
+			rejectHandlers.Add(new RejectHandler {callback = onRejected, rejectable = rejectable});
 		}
 
 		/// <summary>
 		///     Add a resolve handler for this promise.
 		/// </summary>
-		private void AddResolveHandler(Action onResolved, IRejectable rejectable) {
-			if (resolveHandlers == null) resolveHandlers = new List<ResolveHandler>();
+		private void AddResolveHandler(Action<PromisedT> onResolved, IRejectable rejectable) {
+			if (resolveCallbacks == null) resolveCallbacks = new List<Action<PromisedT>>();
 
-			resolveHandlers.Add(new ResolveHandler {
-				callback = onResolved,
-				rejectable = rejectable
-			});
+			if (resolveRejectables == null) resolveRejectables = new List<IRejectable>();
+
+			resolveCallbacks.Add(onResolved);
+			resolveRejectables.Add(rejectable);
 		}
 
 		/// <summary>
-		///     Invoke a single error handler.
+		///     Invoke a single handler.
 		/// </summary>
-		private void InvokeRejectHandler(Action<Exception> callback, IRejectable rejectable, Exception value) {
+		private void InvokeHandler<T>(Action<T> callback, IRejectable rejectable, T value) {
 			//            Argument.NotNull(() => callback);
-			//            Argument.NotNull(() => rejectable);
+			//            Argument.NotNull(() => rejectable);            
 
 			try {
 				callback(value);
-			} catch (Exception ex) {
-				rejectable.Reject(ex);
-			}
-		}
-
-		/// <summary>
-		///     Invoke a single resolve handler.
-		/// </summary>
-		private void InvokeResolveHandler(Action callback, IRejectable rejectable) {
-			//            Argument.NotNull(() => callback);
-			//            Argument.NotNull(() => rejectable);
-
-			try {
-				callback();
 			} catch (Exception ex) {
 				rejectable.Reject(ex);
 			}
@@ -622,7 +571,8 @@ namespace Reroll2.Promises {
 		/// </summary>
 		private void ClearHandlers() {
 			rejectHandlers = null;
-			resolveHandlers = null;
+			resolveCallbacks = null;
+			resolveRejectables = null;
 		}
 
 		/// <summary>
@@ -631,7 +581,7 @@ namespace Reroll2.Promises {
 		private void InvokeRejectHandlers(Exception ex) {
 			//            Argument.NotNull(() => ex);
 
-			if (rejectHandlers != null) rejectHandlers.Each(handler => InvokeRejectHandler(handler.callback, handler.rejectable, ex));
+			if (rejectHandlers != null) rejectHandlers.Each(handler => InvokeHandler(handler.callback, handler.rejectable, ex));
 
 			ClearHandlers();
 		}
@@ -639,8 +589,8 @@ namespace Reroll2.Promises {
 		/// <summary>
 		///     Invoke all resolve handlers.
 		/// </summary>
-		private void InvokeResolveHandlers() {
-			if (resolveHandlers != null) resolveHandlers.Each(handler => InvokeResolveHandler(handler.callback, handler.rejectable));
+		private void InvokeResolveHandlers(PromisedT value) {
+			if (resolveCallbacks != null) for (int i = 0, maxI = resolveCallbacks.Count; i < maxI; i++) InvokeHandler(resolveCallbacks[i], resolveRejectables[i], value);
 
 			ClearHandlers();
 		}
@@ -648,11 +598,11 @@ namespace Reroll2.Promises {
 		/// <summary>
 		///     Helper function to invoke or register resolve/reject handlers.
 		/// </summary>
-		private void ActionHandlers(IRejectable resultPromise, Action resolveHandler, Action<Exception> rejectHandler) {
+		private void ActionHandlers(IRejectable resultPromise, Action<PromisedT> resolveHandler, Action<Exception> rejectHandler) {
 			if (CurState == PromiseState.Resolved) {
-				InvokeResolveHandler(resolveHandler, resultPromise);
+				InvokeHandler(resolveHandler, resultPromise, resolveValue);
 			} else if (CurState == PromiseState.Rejected) {
-				InvokeRejectHandler(rejectHandler, resultPromise, rejectionException);
+				InvokeHandler(rejectHandler, resultPromise, rejectionException);
 			} else {
 				AddResolveHandler(resolveHandler, resultPromise);
 				AddRejectHandler(rejectHandler, resultPromise);
@@ -663,20 +613,21 @@ namespace Reroll2.Promises {
 		///     Returns a promise that resolves when all of the promises in the enumerable argument have resolved.
 		///     Returns a promise of a collection of the resolved results.
 		/// </summary>
-		public static IPromise All(params IPromise[] promises) {
-			return All((IEnumerable<IPromise>)promises); // Cast is required to force use of the other All function.
+		public static IPromise<IEnumerable<PromisedT>> All(params IPromise<PromisedT>[] promises) {
+			return All((IEnumerable<IPromise<PromisedT>>)promises); // Cast is required to force use of the other All function.
 		}
 
 		/// <summary>
 		///     Returns a promise that resolves when all of the promises in the enumerable argument have resolved.
 		///     Returns a promise of a collection of the resolved results.
 		/// </summary>
-		public static IPromise All(IEnumerable<IPromise> promises) {
+		public static IPromise<IEnumerable<PromisedT>> All(IEnumerable<IPromise<PromisedT>> promises) {
 			var promisesArray = promises.ToArray();
-			if (promisesArray.Length == 0) return Resolved();
+			if (promisesArray.Length == 0) return Promise<IEnumerable<PromisedT>>.Resolved(EnumerableExt.Empty<PromisedT>());
 
 			var remainingCount = promisesArray.Length;
-			var resultPromise = new Promise();
+			var results = new PromisedT[remainingCount];
+			var resultPromise = new Promise<IEnumerable<PromisedT>>();
 			resultPromise.WithName("All");
 
 			promisesArray.Each((promise, index) => {
@@ -684,9 +635,11 @@ namespace Reroll2.Promises {
 					.Catch(ex => {
 						if (resultPromise.CurState == PromiseState.Pending) resultPromise.Reject(ex);
 					})
-					.Then(() => {
+					.Then(result => {
+						results[index] = result;
+
 						--remainingCount;
-						if (remainingCount <= 0) resultPromise.Resolve();
+						if (remainingCount <= 0) resultPromise.Resolve(results);
 					})
 					.Done();
 			});
@@ -695,41 +648,22 @@ namespace Reroll2.Promises {
 		}
 
 		/// <summary>
-		///     Chain a number of operations using promises.
-		///     Takes a number of functions each of which starts an async operation and yields a promise.
+		///     Returns a promise that resolves when the first of the promises in the enumerable argument have resolved.
+		///     Returns the value from the first promise that has resolved.
 		/// </summary>
-		public static IPromise Sequence(params Func<IPromise>[] fns) {
-			return Sequence((IEnumerable<Func<IPromise>>)fns);
-		}
-
-		/// <summary>
-		///     Chain a sequence of operations using promises.
-		///     Takes a collection of functions each of which starts an async operation and yields a promise.
-		/// </summary>
-		public static IPromise Sequence(IEnumerable<Func<IPromise>> fns) {
-			return fns.Aggregate(
-				Resolved(),
-				(prevPromise, fn) => { return prevPromise.Then(() => fn()); }
-			);
+		public static IPromise<PromisedT> Race(params IPromise<PromisedT>[] promises) {
+			return Race((IEnumerable<IPromise<PromisedT>>)promises); // Cast is required to force use of the other function.
 		}
 
 		/// <summary>
 		///     Returns a promise that resolves when the first of the promises in the enumerable argument have resolved.
 		///     Returns the value from the first promise that has resolved.
 		/// </summary>
-		public static IPromise Race(params IPromise[] promises) {
-			return Race((IEnumerable<IPromise>)promises); // Cast is required to force use of the other function.
-		}
-
-		/// <summary>
-		///     Returns a promise that resolves when the first of the promises in the enumerable argument have resolved.
-		///     Returns the value from the first promise that has resolved.
-		/// </summary>
-		public static IPromise Race(IEnumerable<IPromise> promises) {
+		public static IPromise<PromisedT> Race(IEnumerable<IPromise<PromisedT>> promises) {
 			var promisesArray = promises.ToArray();
 			if (promisesArray.Length == 0) throw new ApplicationException("At least 1 input promise must be provided for Race");
 
-			var resultPromise = new Promise();
+			var resultPromise = new Promise<PromisedT>();
 			resultPromise.WithName("Race");
 
 			promisesArray.Each((promise, index) => {
@@ -737,8 +671,8 @@ namespace Reroll2.Promises {
 					.Catch(ex => {
 						if (resultPromise.CurState == PromiseState.Pending) resultPromise.Reject(ex);
 					})
-					.Then(() => {
-						if (resultPromise.CurState == PromiseState.Pending) resultPromise.Resolve();
+					.Then(result => {
+						if (resultPromise.CurState == PromiseState.Pending) resultPromise.Resolve(result);
 					})
 					.Done();
 			});
@@ -749,43 +683,21 @@ namespace Reroll2.Promises {
 		/// <summary>
 		///     Convert a simple value directly into a resolved promise.
 		/// </summary>
-		public static IPromise Resolved() {
-			var promise = new Promise();
-			promise.Resolve();
+		public static IPromise<PromisedT> Resolved(PromisedT promisedValue) {
+			var promise = new Promise<PromisedT>();
+			promise.Resolve(promisedValue);
 			return promise;
 		}
 
 		/// <summary>
 		///     Convert an exception directly into a rejected promise.
 		/// </summary>
-		public static IPromise Rejected(Exception ex) {
+		public static IPromise<PromisedT> Rejected(Exception ex) {
 			//            Argument.NotNull(() => ex);
 
-			var promise = new Promise();
+			var promise = new Promise<PromisedT>();
 			promise.Reject(ex);
 			return promise;
-		}
-
-		/// <summary>
-		///     Raises the UnhandledException event.
-		/// </summary>
-		internal static void PropagateUnhandledException(object sender, Exception ex) {
-			if (unhandlerException != null) unhandlerException(sender, new ExceptionEventArgs(ex));
-		}
-
-		/// <summary>
-		///     Represents a handler invoked when the promise is resolved.
-		/// </summary>
-		public struct ResolveHandler {
-			/// <summary>
-			///     Callback fn.
-			/// </summary>
-			public Action callback;
-
-			/// <summary>
-			///     The promise that is rejected when there is an error while invoking the handler.
-			/// </summary>
-			public IRejectable rejectable;
 		}
 	}
 }

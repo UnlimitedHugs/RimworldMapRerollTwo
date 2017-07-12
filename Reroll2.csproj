@@ -72,8 +72,9 @@
     <Compile Include="Source\Patches\BeachMaker_Init_Patch.cs" />
     <Compile Include="Source\Patches\Building_Destroy_Patch.cs" />
     <Compile Include="Source\Patches\TerrainPatchMaker_Init_Patch.cs" />
-    <Compile Include="Source\Promises\Deferred.cs" />
+    <Compile Include="Source\Promises\EnumerableExt.cs" />
     <Compile Include="Source\Promises\IPromise.cs" />
+    <Compile Include="Source\Promises\Promise.cs" />
     <Compile Include="Source\RerollSettingsDef.cs" />
     <Compile Include="Source\ReflectionCache.cs" />
     <Compile Include="Source\ValueInterpolator.cs" />

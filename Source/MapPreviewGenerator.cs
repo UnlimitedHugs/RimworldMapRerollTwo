@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using Promises;
+using Reroll2.Promises;
 using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;
@@ -51,7 +51,7 @@ namespace Reroll2 {
 			if (disposeHandle == null) {
 				throw new Exception("MapPreviewGenerator has already been disposed.");
 			}
-			var promise = new Deferred<Texture2D>();
+			var promise = new Promise<Texture2D>();
 			if (workerThread == null) {
 				workerThread = new Thread(DoThreadWork);
 				workerThread.Start();
@@ -92,7 +92,7 @@ namespace Reroll2 {
 						}
 						WaitForExecutionInMainThread(() => {
 							if (texture == null) {
-								req.Promise.Reject();
+								req.Promise.Reject(null);
 							} else {
 								req.Promise.Resolve(texture);
 							}
@@ -102,7 +102,7 @@ namespace Reroll2 {
 			} catch (Exception e) {
 				Reroll2Controller.Instance.Logger.Error("Exception in preview generator thread: " + e);
 				if (request != null) {
-					request.Promise.Reject();
+					request.Promise.Reject(e);
 				}
 			}
 		}
@@ -291,12 +291,12 @@ namespace Reroll2 {
 		}
 
 		private class QueuedPreviewRequest {
-			public readonly Deferred<Texture2D> Promise;
+			public readonly Promise<Texture2D> Promise;
 			public readonly string Seed;
 			public readonly int MapTile;
 			public readonly int MapSize;
 
-			public QueuedPreviewRequest(Deferred<Texture2D> promise, string seed, int mapTile, int mapSize) {
+			public QueuedPreviewRequest(Promise<Texture2D> promise, string seed, int mapTile, int mapSize) {
 				Promise = promise;
 				Seed = seed;
 				MapTile = mapTile;
