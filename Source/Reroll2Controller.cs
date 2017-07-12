@@ -144,7 +144,7 @@ namespace Reroll2 {
 			if (GUI.Button(new Rect(10, 50, 100, 30), "Preview next")) {
 				var currentMap = Find.VisibleMap;
 				var state = RerollToolbox.GetStateForMap(currentMap);
-				var seed = RerollToolbox.GetNextRerollSeed(state);
+				var seed = RerollToolbox.GetNextRerollSeed(RerollToolbox.CurrentMapSeed(state));
 				for (int i = 0; i < 9; i++) {
 					previewGenerator.QueuePreviewForSeed(seed+i, currentMap.Tile, currentMap.Size.x).Done(t => mapPreviewTex = t);	
 				}

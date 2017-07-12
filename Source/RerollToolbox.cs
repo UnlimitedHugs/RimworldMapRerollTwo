@@ -43,7 +43,7 @@ namespace Reroll2 {
 
 				var newParent = PlaceNewMapParent(originalTile);
 
-				var mapSeed = GetNextRerollSeed(oldMapState);
+				var mapSeed = GetNextRerollSeed(CurrentMapSeed(oldMapState));
 				var newMap = GenerateNewMapWithSeed(newParent, oldMap.Size, mapSeed);
 
 				var newMapState = GetStateForMap(newMap);
@@ -67,9 +67,12 @@ namespace Reroll2 {
 			}, "GeneratingMap", true, GameAndMapInitExceptionHandlers.ErrorWhileGeneratingMap);
 		}
 
-		public static string GetNextRerollSeed(RerollMapState mapState) {
-			var previousSeed = mapState.RerollSeed ?? Find.World.info.seedString;
-			return Reroll2Controller.Instance.DeterministicRerollsSetting ? GenerateNewRerollSeed(previousSeed) : Rand.Int.ToString();
+		public static string CurrentMapSeed(RerollMapState mapState) {
+			return mapState.RerollSeed ?? Find.World.info.seedString;
+		}
+
+		public static string GetNextRerollSeed(string currentSeed) {
+			return Reroll2Controller.Instance.DeterministicRerollsSetting ? GenerateNewRerollSeed(currentSeed) : Rand.Int.ToString();
 		}
 
 		public static RerollMapState GetStateForMap(Map map = null) {

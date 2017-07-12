@@ -8,8 +8,8 @@
 	<Reroll2_remainingResources>Remaining map resources</Reroll2_remainingResources>
 	<Reroll2_cannotAfford>Cannot afford operation.</Reroll2_cannotAfford>
 	
-	<Reroll2_deactivationLetter>Dice</Reroll2_deactivationLetter>
-	<Reroll2_deactivationLetter_text>As you mine into your first piece of ore, the Dice of Fate monument powers down and turns to lifeless stone.</Reroll2_deactivationLetter_text>
+	<Reroll2_previews_previewsTab>Previews</Reroll2_previews_previewsTab>
+	<Reroll2_previews_favoritesTab>Favorites</Reroll2_previews_favoritesTab>
 	
 	<setting_paidRerolls_label>Rerolls cost resources</setting_paidRerolls_label>
 	<setting_paidRerolls_desc>When enabled, rerolling maps and geysers will cost unmined resources from the map.</setting_paidRerolls_desc>

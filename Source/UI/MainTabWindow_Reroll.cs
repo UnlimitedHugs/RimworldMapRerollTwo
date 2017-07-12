@@ -1,5 +1,4 @@
 ﻿using System;
-using HugsLib.Utils;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -41,7 +40,10 @@ namespace Reroll2.UI {
 			GUILayout.BeginHorizontal();
 			DoRerollTabButton(Resources.Textures.UIRerollMap, "Reroll map", null, () => {
 				if (CanAffordOperation(Reroll2Controller.MapRerollType.Geyser)) {
-					Reroll2Controller.Instance.RerollMap();
+					if (Find.VisibleMap != null) {
+						Find.WindowStack.Add(new Dialog_MapPreviews());
+						//Reroll2Controller.Instance.RerollMap();
+					}
 				}
 			});
 			GUILayout.Space(ControlSpacing);
