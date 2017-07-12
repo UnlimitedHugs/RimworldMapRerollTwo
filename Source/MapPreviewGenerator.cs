@@ -41,11 +41,11 @@ namespace Reroll2 {
 			{"WaterMovingShallow", waterColorShallow}
 		};
 
+		private readonly Queue<QueuedPreviewRequest> queuedRequests = new Queue<QueuedPreviewRequest>();
 		private Thread workerThread;
 		private EventWaitHandle workHandle = new AutoResetEvent(false);
 		private EventWaitHandle disposeHandle = new AutoResetEvent(false);
 		private EventWaitHandle mainThreadHandle = new AutoResetEvent(false);
-		private Queue<QueuedPreviewRequest> queuedRequests = new Queue<QueuedPreviewRequest>();
 
 		public IPromise<Texture2D> QueuePreviewForSeed(string seed, int mapTile, int mapSize) {
 			if (disposeHandle == null) {
@@ -75,7 +75,7 @@ namespace Reroll2 {
 							texture = new Texture2D(req.MapSize, req.MapSize, TextureFormat.RGB24, false);
 							texture.Apply();
 						});
-
+						
 						try {
 							if (texture == null) {
 								throw new Exception("Could not create required texture.");
@@ -101,6 +101,9 @@ namespace Reroll2 {
 						});
 					}
 				}
+				workHandle.Close();
+				mainThreadHandle.Close();
+				mainThreadHandle = disposeHandle = workHandle = null;
 			} catch (Exception e) {
 				Reroll2Controller.Instance.Logger.Error("Exception in preview generator thread: " + e);
 				if (request != null) {
@@ -113,16 +116,15 @@ namespace Reroll2 {
 			if (disposeHandle == null) {
 				throw new Exception("MapPreviewGenerator has already been disposed.");
 			}
+			queuedRequests.Clear();
 			disposeHandle.Close();
-			workHandle.Close();
-			mainThreadHandle.Close();
-			mainThreadHandle = disposeHandle = workHandle = null;
 		}
 
 		/// <summary>
 		/// Block until delegate is executed or times out
 		/// </summary>
 		private void WaitForExecutionInMainThread(Action action) {
+			if (mainThreadHandle == null) return;
 			Reroll2Controller.Instance.ExecuteInMainThread(() => {
 				action();
 				mainThreadHandle.Set();

@@ -10,6 +10,10 @@
 	
 	<Reroll2_previews_previewsTab>Previews</Reroll2_previews_previewsTab>
 	<Reroll2_previews_favoritesTab>Favorites</Reroll2_previews_favoritesTab>
+	<Reroll2_previews_nextPage>Next page &gt;</Reroll2_previews_nextPage>
+	<Reroll2_previews_prevPage>&lt; Prev page</Reroll2_previews_prevPage>
+	<Reroll2_previews_generateMap>Generate this map</Reroll2_previews_generateMap>
+	<Reroll2_previews_favoriteCheck>Favorite</Reroll2_previews_favoriteCheck>
 	
 	<setting_paidRerolls_label>Rerolls cost resources</setting_paidRerolls_label>
 	<setting_paidRerolls_desc>When enabled, rerolling maps and geysers will cost unmined resources from the map.</setting_paidRerolls_desc>

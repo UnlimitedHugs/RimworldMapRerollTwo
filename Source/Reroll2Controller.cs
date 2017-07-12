@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using HugsLib;
 using HugsLib.Settings;
 using HugsLib.Utils;
@@ -18,8 +19,11 @@ namespace Reroll2 {
 		}
 
 		public static Reroll2Controller Instance { get; private set; }
+
+		private readonly MapPreviewGenerator previewGenerator = new MapPreviewGenerator();
+		private readonly Queue<Action> scheduledMainThreadActions = new Queue<Action>();
+		
 		private MapGeneratorDef lastUsedMapGenerator;
-		private bool rerollInProgress;
 		private bool generatorSeedPushed;
 
 		public override string ModIdentifier {
@@ -45,8 +49,6 @@ namespace Reroll2 {
 
 		private GeyserRerollTool geyserReroll;
 		private Texture2D mapPreviewTex;
-		private MapPreviewGenerator previewGenerator = new MapPreviewGenerator();
-		private Action scheduledMainThreadAction;
 
 		private Reroll2Controller() {
 			Instance = this;
@@ -78,8 +80,7 @@ namespace Reroll2 {
 			
 			RerollToolbox.TryStopPawnVomiting(map);
 
-			if (mapState.RerollGenerated && rerollInProgress) {
-				rerollInProgress = false;
+			if (mapState.RerollGenerated && mapState.RerollGenerated) {
 				RerollToolbox.KillMapIntroDialog();
 				if (PaidRerollsSetting) {
 					// adjust map to current remaining resources and charge for the reroll
@@ -88,15 +89,6 @@ namespace Reroll2 {
 				}
 			}
 			mapPreviewTex = null;
-		}
-
-		public void RerollMap() {
-			if (rerollInProgress) {
-				Logger.Error("Cannot reroll- map reroll already in progress");
-				return;
-			}
-			rerollInProgress = true;
-			RerollToolbox.DoMapReroll();
 		}
 
 		public void RerollGeysers() {
@@ -122,11 +114,10 @@ namespace Reroll2 {
 
 		public override void Update() {
 			if (geyserReroll != null) geyserReroll.OnUpdate();
-			if (scheduledMainThreadAction != null) {
-				var act = scheduledMainThreadAction;
-				scheduledMainThreadAction = null;
-				act();
+			while (scheduledMainThreadActions.Count > 0) {
+				scheduledMainThreadActions.Dequeue()();
 			}
+
 		}
 
 		public override void Tick(int currentTick) {
@@ -174,10 +165,7 @@ namespace Reroll2 {
 		}
 
 		public void ExecuteInMainThread(Action action) {
-			if (scheduledMainThreadAction != null) {
-				throw new Exception("Main thread action already scheduled: " + scheduledMainThreadAction);
-			}
-			scheduledMainThreadAction = action;
+			scheduledMainThreadActions.Enqueue(action);
 		}
 
 		private void PrepareSettingsHandles() {

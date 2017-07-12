@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using HugsLib.Utils;
 using UnityEngine;
 using Verse;
 
@@ -13,7 +14,7 @@ namespace Reroll2.UI {
 		private PreviewPageProvider pageProvider;
 
 		public override Vector2 InitialSize {
-			get { return new Vector2(600, 700); }
+			get { return new Vector2(600, 800); }
 		}
 
 		public override void Notify_ResolutionChanged() {
@@ -63,20 +64,25 @@ namespace Reroll2.UI {
 
 			DoPreviewsContents(contentRect.ContractedBy(ElementSpacing));
 
-			Widgets.ButtonText(new Rect(bottomSection.width - CloseButSize.x, bottomSection.yMax - CloseButSize.y, CloseButSize.x, CloseButSize.y), "CloseButton".Translate());
+			if (Widgets.ButtonText(new Rect(bottomSection.width - CloseButSize.x, bottomSection.yMax - CloseButSize.y, CloseButSize.x, CloseButSize.y), "CloseButton".Translate())) {
+				Close();				
+			}
 		}
 
 		private void DoPreviewsContents(Rect inRect) {
 			var bottomBar = new Rect(inRect.x, inRect.yMax - CloseButSize.y, inRect.width, CloseButSize.y);
 			var previewsArea = new Rect(inRect.x, inRect.y, inRect.width, inRect.height - (bottomBar.height + ElementSpacing));
 
-			pageProvider.DrawPage(previewsArea);
-
-			Widgets.ButtonText(new Rect(bottomBar.xMin, bottomBar.yMin, CloseButSize.x, bottomBar.height), "< Prev page");
+			pageProvider.Draw(previewsArea);
+			if (Widgets.ButtonText(new Rect(bottomBar.xMin, bottomBar.yMin, CloseButSize.x, bottomBar.height), "Reroll2_previews_prevPage".Translate())) {
+				pageProvider.PrevPage();
+			}
 			Text.Anchor = TextAnchor.MiddleCenter;
 			Widgets.Label(bottomBar, "Page "+(pageProvider.CurrentPage + 1));
 			Text.Anchor = TextAnchor.UpperLeft;
-			Widgets.ButtonText(new Rect(bottomBar.xMax - CloseButSize.x, bottomBar.yMin, CloseButSize.x, bottomBar.height), "Next page >");
+			if (Widgets.ButtonText(new Rect(bottomBar.xMax - CloseButSize.x, bottomBar.yMin, CloseButSize.x, bottomBar.height), "Reroll2_previews_nextPage".Translate())) {
+				pageProvider.NextPage();
+			}
 		}
 
 		private void OnTabSelected(int tabIndex) {

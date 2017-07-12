@@ -12,7 +12,7 @@ namespace Reroll2 {
 		private const sbyte ThingMemoryState = -2;
 		private const sbyte ThingDiscardedState = -3;
 
-		public static void DoMapReroll() {
+		public static void DoMapReroll(string seed = null) {
 			var oldMap = Find.VisibleMap;
 			if (oldMap == null) {
 				Reroll2Controller.Instance.Logger.Error("No visible map- cannot reroll");
@@ -43,7 +43,7 @@ namespace Reroll2 {
 
 				var newParent = PlaceNewMapParent(originalTile);
 
-				var mapSeed = GetNextRerollSeed(CurrentMapSeed(oldMapState));
+				var mapSeed = seed ?? GetNextRerollSeed(CurrentMapSeed(oldMapState));
 				var newMap = GenerateNewMapWithSeed(newParent, oldMap.Size, mapSeed);
 
 				var newMapState = GetStateForMap(newMap);
