@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<MainButtonDefs>
+
+	<MainButtonDef>
+		<defName>MapReroll</defName>
+		<label>Map Reroll</label>
+		<description>Access Map Reroll functionality.</description>
+		<tabWindowClass>Reroll2.UI.MainTabWindow_Reroll</tabWindowClass>
+		<order>55</order>
+		<validWithoutMap>true</validWithoutMap>
+	</MainButtonDef>
+
+</MainButtonDefs>

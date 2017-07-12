@@ -65,6 +65,7 @@ namespace Reroll2 {
 			QueuedPreviewRequest request = null;
 			try {
 				while (queuedRequests.Count > 0 || WaitHandle.WaitAny(new WaitHandle[] {workHandle, disposeHandle}) == 0) {
+					Exception rejectException = null;
 					if (queuedRequests.Count > 0) {
 						var req = queuedRequests.Dequeue();
 						request = req;
@@ -82,6 +83,7 @@ namespace Reroll2 {
 							GeneratePreviewForSeed(req.Seed, req.MapTile, req.MapSize, texture);
 						} catch (Exception e) {
 							Reroll2Controller.Instance.Logger.Error("Failed to generate map preview: " + e);
+							rejectException = e;
 							texture = null;
 						}
 						if (texture != null) {
@@ -92,7 +94,7 @@ namespace Reroll2 {
 						}
 						WaitForExecutionInMainThread(() => {
 							if (texture == null) {
-								req.Promise.Reject(null);
+								req.Promise.Reject(rejectException);
 							} else {
 								req.Promise.Resolve(texture);
 							}

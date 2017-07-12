@@ -45,17 +45,19 @@ namespace Reroll2 {
 
 				var mapSeed = GetNextRerollSeed(oldMapState);
 				var newMap = GenerateNewMapWithSeed(newParent, oldMap.Size, mapSeed);
-				SwitchToMap(newMap);
-				if (isOnStartingTile) {
-					Find.Scenario.PostGameStart();
-					Current.Game.InitData = null;
-				}
 
 				var newMapState = GetStateForMap(newMap);
 				newMapState.RerollGenerated = true;
 				newMapState.PlayerAddedThingIds = oldMapState.PlayerAddedThingIds;
 				newMapState.ResourceBalance = oldMapState.ResourceBalance;
 				newMapState.RerollSeed = mapSeed;
+
+				SwitchToMap(newMap);
+				if (isOnStartingTile) {
+					Find.Scenario.PostGameStart();
+					Current.Game.InitData = null;
+				}
+				
 				InvokeOnRerollEventReceivers(newMap, receiver => receiver.OnMapStateSet());
 
 				if (!isOnStartingTile) {
