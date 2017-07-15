@@ -14,15 +14,15 @@ namespace Reroll2.UI {
 		private static readonly Vector2 FavoriteControlSize = new Vector2(160f, 24f);
 		private static readonly Color GenerateButtonColor = new Color(.55f, 1f, .55f);
 
-		private readonly PreviewPageProvider pageProvider;
+		private readonly GeneratedPreviewPageProvider previewGenerator;
+		private readonly ListPreviewPageProvider favoritesProvider;
 		private readonly RerollMapState mapState;
 
 		private List<TabRecord> tabs;
 		private TabRecord previewsTab;
 		private TabRecord favoritesTab;
 		private TabRecord activeTab;
-		private bool favorite;
-
+		
 		public override Vector2 InitialSize {
 			get { return new Vector2(600, 800); }
 		}
@@ -48,46 +48,62 @@ namespace Reroll2.UI {
 			doCloseButton = false;
 			SetUpTabs();
 			mapState = RerollToolbox.GetStateForMap();
-			pageProvider = new PreviewPageProvider(Find.VisibleMap);
+			favoritesProvider = new ListPreviewPageProvider();
+			previewGenerator = new GeneratedPreviewPageProvider(Find.VisibleMap);
+			previewGenerator.OpenPage(0);
 		}
 
 		public override void PostClose() {
-			pageProvider.Dispose();
+			previewGenerator.Dispose();
 		}
 
 		private void SetUpTabs() {
 			activeTab = previewsTab = new TabRecord("Reroll2_previews_previewsTab".Translate(), () => OnTabSelected(0), false);
-			favoritesTab = new TabRecord("Reroll2_previews_favoritesTab".Translate(), () => OnTabSelected(1), false);
+			favoritesTab = new TabRecord(string.Empty, () => OnTabSelected(1), false);
 			tabs = new List<TabRecord>{previewsTab, favoritesTab};
 		}
 
 		public override void DoWindowContents(Rect inRect) {
 			var contentRect = inRect;
-			contentRect.yMin += 45f;
+			const float tabMargin = 45f;
+			contentRect.yMin += tabMargin;
 			var bottomSectionHeight = CloseButSize.y + ElementSpacing;
 			var bottomSection = new Rect(inRect.x, inRect.height - bottomSectionHeight, inRect.width, bottomSectionHeight);
 			contentRect.yMax -= bottomSection.height;
 			for (int i = 0; i < tabs.Count; i++) {
 				tabs[i].selected = activeTab == tabs[i];
 			}
+			favoritesTab.label = "Reroll2_previews_favoritesTab".Translate(favoritesProvider.Count);
 			Widgets.DrawMenuSection(contentRect);
 			TabDrawer.DrawTabs(contentRect, tabs);
-
-			DoPreviewsContents(contentRect.ContractedBy(ElementSpacing));
+			var tabContentRect = contentRect.ContractedBy(ElementSpacing);
+			var bottomBar = new Rect(tabContentRect.x, tabContentRect.yMax - PageButtonSize.y, tabContentRect.width, PageButtonSize.y);
+			var previewsArea = new Rect(tabContentRect.x, tabContentRect.y, tabContentRect.width, tabContentRect.height - (bottomBar.height + ElementSpacing));
+			if (activeTab == previewsTab) {
+				DoPreviewsContents(previewsArea, bottomBar);
+			} else if (activeTab == favoritesTab) {
+				DoFavoritesContents(previewsArea, bottomBar);
+			}
 
 			if (Widgets.ButtonText(new Rect(bottomSection.width - CloseButSize.x, bottomSection.yMax - CloseButSize.y, CloseButSize.x, CloseButSize.y), "CloseButton".Translate())) {
 				Close();		
 			}
 		}
 
-		private void DoPreviewsContents(Rect inRect) {
-			var bottomBar = new Rect(inRect.x, inRect.yMax - PageButtonSize.y, inRect.width, PageButtonSize.y);
-			var previewsArea = new Rect(inRect.x, inRect.y, inRect.width, inRect.height - (bottomBar.height + ElementSpacing));
+		private void DoPreviewsContents(Rect previewsArea, Rect bottomBar) {
+			previewGenerator.Draw(previewsArea);
+			DoBottomBarControls(previewGenerator, bottomBar);
+		}
 
-			pageProvider.Draw(previewsArea);
+		private void DoFavoritesContents(Rect previewsArea, Rect bottomBar) {
+			favoritesProvider.Draw(previewsArea);
+			DoBottomBarControls(favoritesProvider, bottomBar);
+		}
+
+		private void DoBottomBarControls(BasePreviewPageProvider pageProvider, Rect inRect) {
 			var currentZoomedPreview = pageProvider.CurrentZoomedInPreview;
 			if (currentZoomedPreview != null) {
-				var generateBtnRect = new Rect(bottomBar.xMin, bottomBar.yMin, GenerateButtonSize.x, bottomBar.height);
+				var generateBtnRect = new Rect(inRect.xMin, inRect.yMin, GenerateButtonSize.x, inRect.height);
 				Reroll2Utility.DrawWithGUIColor(GenerateButtonColor, () => {
 					if (Widgets.ButtonText(generateBtnRect, "Reroll2_previews_generateMap".Translate())) {
 						SoundDefOf.Click.PlayOneShotOnCamera();
@@ -98,59 +114,78 @@ namespace Reroll2.UI {
 					}
 				});
 
-				var favoriteCheckPos = new Vector2(generateBtnRect.xMax + ElementSpacing * 2f, bottomBar.center.y - FavoriteControlSize.y / 2f);
-				var checkLabelRect = new Rect(favoriteCheckPos.x + FavoriteControlSize.y + ElementSpacing, favoriteCheckPos.y - 7f, FavoriteControlSize.x, bottomBar.height);
-				if (Widgets.ButtonInvisible(checkLabelRect)) {
-					favorite = !favorite;
-					(favorite ? SoundDefOf.CheckboxTurnedOn : SoundDefOf.CheckboxTurnedOff).PlayOneShotOnCamera();
+				var favoritesControlRect = new Rect(generateBtnRect.xMax + ElementSpacing, inRect.yMin, FavoriteControlSize.x, inRect.height);
+				var favoriteCheckPos = new Vector2(favoritesControlRect.xMin + ElementSpacing, favoritesControlRect.center.y - FavoriteControlSize.y / 2f);
+				var checkLabelRect = new Rect(favoriteCheckPos.x + FavoriteControlSize.y + ElementSpacing, favoriteCheckPos.y - 7f, FavoriteControlSize.x, inRect.height);
+
+				bool isPreview = favoritesProvider.Contains(currentZoomedPreview);
+				bool checkOn = isPreview;
+				if (Widgets.ButtonInvisible(favoritesControlRect)) {
+					checkOn = !checkOn;
+					(checkOn ? SoundDefOf.CheckboxTurnedOn : SoundDefOf.CheckboxTurnedOff).PlayOneShotOnCamera();
+					if (checkOn) {
+						favoritesProvider.Add(new Widget_MapPreview(currentZoomedPreview));
+					} else {
+						favoritesProvider.Remove(currentZoomedPreview);
+					}
 				}
-				Widgets.Checkbox(favoriteCheckPos, ref favorite);
+				Widgets.Checkbox(favoriteCheckPos, ref checkOn);
+				if (Mouse.IsOver(favoritesControlRect)) {
+					Widgets.DrawHighlight(favoritesControlRect);
+				}
 				Text.Anchor = TextAnchor.MiddleLeft;
 				Widgets.Label(checkLabelRect, "Reroll2_previews_favoriteCheck".Translate());
 				Text.Anchor = TextAnchor.UpperLeft;
 
-				var zoomOutBtnRect = new Rect(bottomBar.xMax - PageButtonSize.x, bottomBar.yMin, PageButtonSize.x, bottomBar.height);
+				var zoomOutBtnRect = new Rect(inRect.xMax - PageButtonSize.x, inRect.yMin, PageButtonSize.x, inRect.height);
 				if (Widgets.ButtonText(zoomOutBtnRect, "Reroll2_previews_zoomOut".Translate())) {
 					currentZoomedPreview.ZoomOut();
 				}
 			} else {
 				var numPagesToTurn = HugsLibUtility.ControlIsHeld ? 5 : 1;
-				if (Widgets.ButtonText(new Rect(bottomBar.xMin, bottomBar.yMin, PageButtonSize.x, bottomBar.height), "Reroll2_previews_prevPage".Translate())) {
-					PageBackwards(numPagesToTurn);
+				if (pageProvider.PageIsAvailable(pageProvider.CurrentPage - numPagesToTurn)) {
+					if (Widgets.ButtonText(new Rect(inRect.xMin, inRect.yMin, PageButtonSize.x, inRect.height), "Reroll2_previews_prevPage".Translate())) {
+						PageBackwards(pageProvider, numPagesToTurn);
+					}
 				}
+
 				Text.Anchor = TextAnchor.MiddleCenter;
-				Widgets.Label(bottomBar, "Page " + (pageProvider.CurrentPage + 1));
+				Widgets.Label(inRect, "Page " + (pageProvider.CurrentPage + 1));
 				Text.Anchor = TextAnchor.UpperLeft;
-				var nextBtnLabel = Reroll2Utility.WithCostSuffix("Reroll2_previews_nextPage", PaidOperationType.GeneratePreviews, pageProvider.CurrentPage + numPagesToTurn);
-				if (Widgets.ButtonText(new Rect(bottomBar.xMax - PageButtonSize.x, bottomBar.yMin, PageButtonSize.x, bottomBar.height), nextBtnLabel)) {
-					PageForward(numPagesToTurn);
+
+				if (pageProvider.PageIsAvailable(pageProvider.CurrentPage + numPagesToTurn)) {
+					var paidNextBtnLabel = Reroll2Utility.WithCostSuffix("Reroll2_previews_nextPage", PaidOperationType.GeneratePreviews, pageProvider.CurrentPage + numPagesToTurn);
+					var nextBtnLabel = activeTab == previewsTab ? paidNextBtnLabel : "Reroll2_previews_nextPage".Translate("");
+					if (Widgets.ButtonText(new Rect(inRect.xMax - PageButtonSize.x, inRect.yMin, PageButtonSize.x, inRect.height), nextBtnLabel)) {
+						PageForward(pageProvider, numPagesToTurn);
+					}
 				}
-				DoMouseWheelPageTurning();
+				DoMouseWheelPageTurning(pageProvider);
 			}
 		}
 
-		private void DoMouseWheelPageTurning() {
+		private void DoMouseWheelPageTurning(BasePreviewPageProvider pageProvider) {
 			if(Event.current.type != EventType.ScrollWheel) return;
 			var scrollAmount = Event.current.delta.y;
 			if (scrollAmount > 0) {
 				// scroll within purchased pages unless shift is held
-				if (pageProvider.CurrentPage < mapState.NumPreviewPagesPurchased - 1 || HugsLibUtility.ShiftIsHeld) {
-					PageForward();
+				if (pageProvider.CurrentPage < mapState.NumPreviewPagesPurchased - 1 || HugsLibUtility.ShiftIsHeld || !Reroll2Controller.Instance.PaidRerollsSetting) {
+					PageForward(pageProvider);
 				}
 			} else if(scrollAmount < 0) {
-				PageBackwards();
+				PageBackwards(pageProvider);
 			}
 		}
 
-		public void PageForward(int numPages = 1) {
+		public void PageForward(BasePreviewPageProvider pageProvider, int numPages = 1) {
 			var pageToOpen = pageProvider.CurrentPage + numPages;
-			if (RerollToolbox.GetOperationCost(PaidOperationType.GeneratePreviews, pageToOpen) > 0) {
+			if (activeTab == previewsTab && RerollToolbox.GetOperationCost(PaidOperationType.GeneratePreviews, pageToOpen) > 0) {
 				RerollToolbox.ChargeForOperation(PaidOperationType.GeneratePreviews, pageToOpen);
 			}
 			pageProvider.OpenPage(pageToOpen);
 		}
 
-		public void PageBackwards(int numPages = 1) {
+		public void PageBackwards(BasePreviewPageProvider pageProvider, int numPages = 1) {
 			numPages = Mathf.Min(pageProvider.CurrentPage, numPages);
 			pageProvider.OpenPage(pageProvider.CurrentPage - numPages);
 		}

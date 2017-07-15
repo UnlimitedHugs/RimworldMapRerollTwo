@@ -14,7 +14,7 @@
 	<Reroll2_cannotAfford>Cannot afford operation.</Reroll2_cannotAfford>
 	
 	<Reroll2_previews_previewsTab>Previews</Reroll2_previews_previewsTab>
-	<Reroll2_previews_favoritesTab>Favorites</Reroll2_previews_favoritesTab>
+	<Reroll2_previews_favoritesTab>Favorites ({0})</Reroll2_previews_favoritesTab>
 	<Reroll2_previews_nextPage>Next page{0} &gt;</Reroll2_previews_nextPage>
 	<Reroll2_previews_prevPage>&lt; Previous page</Reroll2_previews_prevPage>
 	<Reroll2_previews_generateMap>Generate this map</Reroll2_previews_generateMap>

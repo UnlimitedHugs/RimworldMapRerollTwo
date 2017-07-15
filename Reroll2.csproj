@@ -70,9 +70,11 @@
     <Compile Include="Source\Reroll2Utility.cs" />
     <Compile Include="Source\RerollSettingsDef.cs" />
     <Compile Include="Source\ReflectionCache.cs" />
+    <Compile Include="Source\UI\BasePreviewPageProvider.cs" />
     <Compile Include="Source\UI\Dialog_MapPreviews.cs" />
+    <Compile Include="Source\UI\ListPreviewPageProvider.cs" />
     <Compile Include="Source\UI\MainTabWindow_Reroll.cs" />
-    <Compile Include="Source\UI\PreviewPageProvider.cs" />
+    <Compile Include="Source\UI\GeneratedPreviewPageProvider.cs" />
     <Compile Include="Source\UI\Widget_MapPreview.cs" />
     <Compile Include="Source\UI\Widget_ResourceBalance.cs" />
     <Compile Include="Source\ValueInterpolator.cs" />

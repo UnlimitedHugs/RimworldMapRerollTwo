@@ -4,16 +4,17 @@ using UnityEngine;
 using Verse;
 
 namespace Reroll2.UI {
-	public class Widget_MapPreview : IDisposable {
+	public class Widget_MapPreview : IDisposable, IEquatable<Widget_MapPreview> {
 		private const float SpawnInterpolationDuration = .3f;
 		private const float ZoomInterpolationDuration = .5f;
 
 		private static readonly Color OutlineColor = GenColor.FromHex("616C7A");
 
 		private readonly string seed;
-		private readonly ValueInterpolator spawnInterpolator;
-		private readonly ValueInterpolator zoomInterpolator;
+		private readonly IPromise<Texture2D> promise;
 		
+		private ValueInterpolator spawnInterpolator;
+		private ValueInterpolator zoomInterpolator;
 		private Texture2D previewTex;
 		private Rect zoomedOutRect;
 		private bool zoomedIn;
@@ -31,8 +32,20 @@ namespace Reroll2.UI {
 		}
 
 		public Widget_MapPreview(IPromise<Texture2D> promise, string seed) {
+			this.promise = promise;
 			promise.Done(OnPromiseResolved);
 			this.seed = seed;
+			PrepareInterpolators();
+		}
+
+		public Widget_MapPreview(Widget_MapPreview copyFrom) {
+			promise = copyFrom.promise;
+			promise.Done(OnPromiseResolved);
+			seed = copyFrom.seed;
+			PrepareInterpolators();
+		}
+
+		private void PrepareInterpolators() {
 			spawnInterpolator = new ValueInterpolator(1);
 			zoomInterpolator = new ValueInterpolator(0);
 		}
@@ -100,6 +113,23 @@ namespace Reroll2.UI {
 
 		private void DrawOutline(Rect rect) {
 			Reroll2Utility.DrawWithGUIColor(OutlineColor, () => Widgets.DrawBox(rect));
+		}
+
+		public bool Equals(Widget_MapPreview other) {
+			if (ReferenceEquals(null, other)) return false;
+			if (ReferenceEquals(this, other)) return true;
+			return string.Equals(seed, other.seed);
+		}
+
+		public override bool Equals(object obj) {
+			if (ReferenceEquals(null, obj)) return false;
+			if (ReferenceEquals(this, obj)) return true;
+			if (obj.GetType() != GetType()) return false;
+			return Equals((Widget_MapPreview)obj);
+		}
+
+		public override int GetHashCode() {
+			return (seed != null ? seed.GetHashCode() : 0);
 		}
 	}
 }

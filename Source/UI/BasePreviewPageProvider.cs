@@ -1,47 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Verse;
 
 namespace Reroll2.UI {
-	public class PreviewPageProvider : IDisposable {
+	public abstract class BasePreviewPageProvider : IDisposable {
+		protected const int PreviewsPerPage = 9;
 		private const float PreviewSpacing = 10;
 		private const float PageFlipDuration = .5f;
 
-		private readonly Map startingMap;
-		private const int PreviewsPerPage = 9;
-		private MapPreviewGenerator previewGenerator;
-		private List<Widget_MapPreview> previews = new List<Widget_MapPreview>();
-		private int currentPage;
-		private string lastGeneratedSeed;
-		private Widget_MapPreview overlayPreview;
+		protected List<Widget_MapPreview> previews = new List<Widget_MapPreview>();
+		protected int currentPage;
+		protected Widget_MapPreview overlayPreview;
+		
 		private ValueInterpolator pageInterpolator;
 		private int outgoingPage = -1;
 
-		public int CurrentPage {
+		public virtual int CurrentPage {
 			get { return currentPage; }
 		}
 
 		public int NumPagesAvailable {
-			get { return previews.Count / PreviewsPerPage; }
+			get { return Mathf.CeilToInt(previews.Count / (float)PreviewsPerPage); }
 		}
 
 		public Widget_MapPreview CurrentZoomedInPreview {
 			get { return overlayPreview != null && overlayPreview.IsFullyZoomedIn ? overlayPreview : null; }
 		}
 
-		public PreviewPageProvider(Map currentMap) {
-			startingMap = currentMap;
-			var mapState = RerollToolbox.GetStateForMap(currentMap);
-			lastGeneratedSeed = RerollToolbox.CurrentMapSeed(mapState);
-			previewGenerator = new MapPreviewGenerator();
+		protected BasePreviewPageProvider() {
 			pageInterpolator = new ValueInterpolator(1f);
-			OpenPage(0);
 		}
 
-		public void OpenPage(int pageIndex) {
+		public IEnumerable<Widget_MapPreview> AllPreviews {
+			get { return previews; }
+		}
+
+		public virtual void OpenPage(int pageIndex) {
+			if(!PageIsAvailable(pageIndex)) return;
 			overlayPreview = null;
-			EnsureEnoughPreviewsForPage(pageIndex);
 			if (pageIndex != currentPage) {
 				outgoingPage = currentPage;
 				currentPage = pageIndex;
@@ -50,23 +46,17 @@ namespace Reroll2.UI {
 			}
 		}
 
-		private void OnPageFlipFinished(ValueInterpolator interpolator, float finalValue, float interpolationDuration, InterpolationCurves.Curve interpolationCurve) {
-			interpolator.value = finalValue;
-			outgoingPage = -1;
-		}
-
-		public void Dispose() {
-			previewGenerator.Dispose();
+		public virtual void Dispose() {
 			foreach (var preview in previews) {
 				preview.Dispose();
 			}
 		}
 
-		private bool PageTransitionInProgress {
-			get { return outgoingPage >= 0; }
+		public virtual bool PageIsAvailable(int pageIndex) {
+			return pageIndex >= 0 && MaxIndexOnPage(pageIndex-1)+1 < previews.Count;
 		}
 
-		public void Draw(Rect inRect) {
+		public virtual void Draw(Rect inRect) {
 			if (Event.current.type == EventType.Repaint) {
 				pageInterpolator.Update();
 			}
@@ -79,8 +69,13 @@ namespace Reroll2.UI {
 				var outgoingRect = new Rect(inRect.x + outgoingOffset, inRect.y, inRect.width, inRect.height);
 				DrawPage(outgoingPage, outgoingRect);
 			}
+			
 			var currentPageRect = new Rect(inRect.x + currentOffset, inRect.y, inRect.width, inRect.height);
 			DrawPage(currentPage, currentPageRect);
+			
+			if (overlayPreview != null) {
+				overlayPreview.DrawOverlay(inRect);
+			}
 		}
 
 		private void DrawPage(int page, Rect inRect) {
@@ -88,7 +83,8 @@ namespace Reroll2.UI {
 			var totalSpacing = PreviewSpacing * (rowCount - 1);
 			var previewSize = new Vector2((inRect.width - totalSpacing) / rowCount, (inRect.height - totalSpacing) / rowCount);
 			bool anyOverlayDrawingRequired = false;
-			for (int i = MinIndexOnPage(page); i <= MaxIndexOnPage(page); i++) {
+			var maxPreviewIndex = Mathf.Min(MaxIndexOnPage(page), previews.Count-1);
+			for (int i = MinIndexOnPage(page); i <= maxPreviewIndex; i++) {
 				var preview = previews[i];
 				var previewPosition = GetPreviewPositionFromIndex(i);
 				var previewRect = new Rect(
@@ -105,29 +101,23 @@ namespace Reroll2.UI {
 			if (!anyOverlayDrawingRequired) {
 				overlayPreview = null;
 			}
-			if (overlayPreview != null) {
-				overlayPreview.DrawOverlay(inRect);
-			}
 		}
 
-		private int MinIndexOnPage(int page) {
+		private void OnPageFlipFinished(ValueInterpolator interpolator, float finalValue, float interpolationDuration, InterpolationCurves.Curve interpolationCurve) {
+			interpolator.value = finalValue;
+			outgoingPage = -1;
+		}
+
+		private bool PageTransitionInProgress {
+			get { return outgoingPage >= 0; }
+		}
+
+		protected int MinIndexOnPage(int page) {
 			return page * PreviewsPerPage;
 		}
 
-		private int MaxIndexOnPage(int page) {
+		protected int MaxIndexOnPage(int page) {
 			return page * PreviewsPerPage + PreviewsPerPage - 1;
-		}
-
-		private void EnsureEnoughPreviewsForPage(int page) {
-			while (previews.Count <= MaxIndexOnPage(page)) {
-				previews.Add(CreatePreview());
-			}
-		}
-
-		private Widget_MapPreview CreatePreview() {
-			lastGeneratedSeed = RerollToolbox.GetNextRerollSeed(lastGeneratedSeed);
-			var promise = previewGenerator.QueuePreviewForSeed(lastGeneratedSeed, startingMap.Tile, startingMap.Size.x);
-			return new Widget_MapPreview(promise, lastGeneratedSeed);
 		}
 
 		private Vector2 GetPreviewPositionFromIndex(int previewIndex) {
