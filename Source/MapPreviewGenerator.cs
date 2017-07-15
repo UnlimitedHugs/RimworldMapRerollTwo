@@ -126,7 +126,7 @@ namespace Reroll2 {
 		/// The worker cannot be aborted- wait for the worker to complete before generating map
 		/// </summary>
 		public void WaitForDisposal() {
-			if (!disposed || !workerThread.IsAlive) return;
+			if (!disposed || !workerThread.IsAlive || workerThread.ThreadState == ThreadState.WaitSleepJoin) return;
 			LongEventHandler.QueueLongEvent(() => workerThread.Join(60 * 1000), "Reroll2_finishingPreview", true, null);
 		}
 

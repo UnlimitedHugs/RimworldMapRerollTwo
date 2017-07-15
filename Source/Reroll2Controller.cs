@@ -15,12 +15,8 @@ namespace Reroll2 {
 
 		public static Reroll2Controller Instance { get; private set; }
 
-		private readonly MapPreviewGenerator previewGenerator = new MapPreviewGenerator();
 		private readonly Queue<Action> scheduledMainThreadActions = new Queue<Action>();
 		
-		private MapGeneratorDef lastUsedMapGenerator;
-		private bool generatorSeedPushed;
-
 		public override string ModIdentifier {
 			get { return "Reroll2"; }
 		}
@@ -42,7 +38,10 @@ namespace Reroll2 {
 		public SettingHandle<bool> NoVomitingSetting { get; private set; }
 		public SettingHandle<MapGeneratorMode> MapGeneratorModeSetting { get; set; }
 
+		private MapGeneratorDef lastUsedMapGenerator;
 		private GeyserRerollTool geyserReroll;
+		private bool generatorSeedPushed;
+		private bool pauseScheduled;
 
 		private Reroll2Controller() {
 			Instance = this;
@@ -71,7 +70,12 @@ namespace Reroll2 {
 			if (!mapState.RerollGenerated || !PaidRerollsSetting) {
 				mapState.ResourceBalance = MaxResourceBalance;
 			}
-			
+
+			if (pauseScheduled) {
+				pauseScheduled = false;
+				ExecuteInMainThread(() => Find.TickManager.CurTimeSpeed = TimeSpeed.Paused);
+			}
+
 			RerollToolbox.TryStopPawnVomiting(map);
 
 			if (mapState.RerollGenerated && mapState.RerollGenerated) {
@@ -79,7 +83,6 @@ namespace Reroll2 {
 				if (PaidRerollsSetting) {
 					// adjust map to current remaining resources and charge for the reroll
 					RerollToolbox.ReduceMapResources(map, 100 - mapState.ResourceBalance, 100);
-					
 				}
 			}
 		}
@@ -128,6 +131,10 @@ namespace Reroll2 {
 
 		public void ExecuteInMainThread(Action action) {
 			scheduledMainThreadActions.Enqueue(action);
+		}
+
+		public void PauseOnNextLoad() {
+			pauseScheduled = true;
 		}
 
 		private void PrepareSettingsHandles() {

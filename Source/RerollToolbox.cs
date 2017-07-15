@@ -48,6 +48,10 @@ namespace Reroll2 {
 
 				var newParent = PlaceNewMapParent(originalTile);
 
+				if (Find.TickManager.CurTimeSpeed == TimeSpeed.Paused) {
+					Reroll2Controller.Instance.PauseOnNextLoad();
+				}
+
 				var mapSeed = seed ?? GetNextRerollSeed(CurrentMapSeed(oldMapState));
 				var newMap = GenerateNewMapWithSeed(newParent, oldMap.Size, mapSeed);
 
