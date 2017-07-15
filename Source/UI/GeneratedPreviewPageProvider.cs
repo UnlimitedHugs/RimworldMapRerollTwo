@@ -23,6 +23,10 @@ namespace Reroll2.UI {
 			previewGenerator.Dispose();
 		}
 
+		public void WaitForDisposal() {
+			previewGenerator.WaitForDisposal();
+		}
+
 		public override bool PageIsAvailable(int pageIndex) {
 			return pageIndex >= 0;
 		}

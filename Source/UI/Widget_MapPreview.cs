@@ -32,17 +32,17 @@ namespace Reroll2.UI {
 		}
 
 		public Widget_MapPreview(IPromise<Texture2D> promise, string seed) {
+			PrepareComponents();
 			this.promise = promise;
 			promise.Done(OnPromiseResolved);
 			this.seed = seed;
-			PrepareComponents();
 		}
 
 		public Widget_MapPreview(Widget_MapPreview copyFrom) {
+			PrepareComponents();
 			promise = copyFrom.promise;
 			promise.Done(OnPromiseResolved);
 			seed = copyFrom.seed;
-			PrepareComponents();
 		}
 
 		private void PrepareComponents() {

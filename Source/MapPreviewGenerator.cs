@@ -46,6 +46,7 @@ namespace Reroll2 {
 		private EventWaitHandle workHandle = new AutoResetEvent(false);
 		private EventWaitHandle disposeHandle = new AutoResetEvent(false);
 		private EventWaitHandle mainThreadHandle = new AutoResetEvent(false);
+		private bool disposed;
 
 		public IPromise<Texture2D> QueuePreviewForSeed(string seed, int mapTile, int mapSize) {
 			if (disposeHandle == null) {
@@ -113,11 +114,20 @@ namespace Reroll2 {
 		}
 
 		public void Dispose() {
-			if (disposeHandle == null) {
+			if (disposed) {
 				throw new Exception("MapPreviewGenerator has already been disposed.");
 			}
+			disposed = true;
 			queuedRequests.Clear();
 			disposeHandle.Close();
+		}
+
+		/// <summary>
+		/// The worker cannot be aborted- wait for the worker to complete before generating map
+		/// </summary>
+		public void WaitForDisposal() {
+			if (!disposed || !workerThread.IsAlive) return;
+			LongEventHandler.QueueLongEvent(() => workerThread.Join(60 * 1000), "Reroll2_finishingPreview", true, null);
 		}
 
 		/// <summary>

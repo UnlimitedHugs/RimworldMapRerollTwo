@@ -7,11 +7,13 @@
 	<Reroll2_costSuffix> ({0}%)</Reroll2_costSuffix>
 	
 	<Reroll2_visibleMapRequired>View a map to show reroll controls.</Reroll2_visibleMapRequired>
+	<Reroll2_settledMapRequired>Only settled maps can be rerolled.</Reroll2_settledMapRequired>
 	
 	<Reroll2_previews_costSuffix> ({0}%)</Reroll2_previews_costSuffix>
 	
 	<Reroll2_remainingResources>Remaining map resources</Reroll2_remainingResources>
-	<Reroll2_cannotAfford>Cannot afford operation.</Reroll2_cannotAfford>
+	
+	<Reroll2_finishingPreview>Finishing preview</Reroll2_finishingPreview>
 	
 	<Reroll2_previews_previewsTab>Previews</Reroll2_previews_previewsTab>
 	<Reroll2_previews_favoritesTab>Favorites ({0})</Reroll2_previews_favoritesTab>

@@ -38,45 +38,34 @@ namespace Reroll2.UI {
 
 		public override void DoWindowContents(Rect inRect) {
 			GUILayout.BeginArea(inRect);
+			Text.Font = GameFont.Small;
 			if (Find.World.renderer.wantedMode != WorldRenderMode.None) {
-				Text.Font = GameFont.Small;
 				GUILayout.Label("Reroll2_visibleMapRequired".Translate());
+				return;
+			}
+			if (Find.VisibleMap == null || !Find.VisibleMap.IsPlayerHome) {
+				GUILayout.Label("Reroll2_settledMapRequired".Translate());
 				return;
 			}
 			GUILayout.BeginHorizontal();
 			DoRerollTabButton(Resources.Textures.UIRerollMap, Reroll2Utility.WithCostSuffix("Reroll2_rerollMap", PaidOperationType.GeneratePreviews), null, () => {
-				if (CanAffordOperation(PaidOperationType.GeneratePreviews)) {
-					if (Find.VisibleMap != null) {
-						if (RerollToolbox.GetOperationCost(PaidOperationType.GeneratePreviews) > 0) {
-							RerollToolbox.ChargeForOperation(PaidOperationType.GeneratePreviews);
-						}
-						Find.WindowStack.Add(new Dialog_MapPreviews());
-					}
+				if (RerollToolbox.GetOperationCost(PaidOperationType.GeneratePreviews) > 0) {
+					RerollToolbox.ChargeForOperation(PaidOperationType.GeneratePreviews);
 				}
+				Find.WindowStack.Add(new Dialog_MapPreviews());
 			});
 			GUILayout.Space(ControlSpacing);
 			DoRerollTabButton(Resources.Textures.UIRerollGeysers, Reroll2Utility.WithCostSuffix("Reroll2_rerollGeysers", PaidOperationType.RerollGeysers), null, () => {
-				if (CanAffordOperation(PaidOperationType.RerollGeysers)) {
-					if (!Reroll2Controller.Instance.GeyserRerollInProgress) {
-						Reroll2Controller.Instance.RerollGeysers();
-					} else {
-						Messages.Message("Reroll2_rerollInProgress".Translate(), MessageSound.RejectInput);
-					}
+				if (!Reroll2Controller.Instance.GeyserRerollInProgress) {
+					Reroll2Controller.Instance.RerollGeysers();
+				} else {
+					Messages.Message("Reroll2_rerollInProgress".Translate(), MessageSound.RejectInput);
 				}
 			});
 			GUILayout.Space(ControlSpacing);
 			balanceWidget.DrawLayout();
 			GUILayout.EndHorizontal();
 			GUILayout.EndArea();
-		}
-
-		private bool CanAffordOperation(PaidOperationType rerollType) {
-			if (RerollToolbox.CanAffordOperation(rerollType)) {
-				return true;
-			} else {
-				Messages.Message("Reroll2_cannotAfford".Translate(), MessageSound.RejectInput);
-			}
-			return false;
 		}
 
 		private void DoRerollTabButton(Texture2D icon, string label, string tooltip, Action callback) {

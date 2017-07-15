@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using HugsLib;
 using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;
@@ -79,28 +78,26 @@ namespace Reroll2 {
 			}
 			for (int i = 1; i <= numSpawnOperations; i++) {
 				var operationIndex = i;
-				HugsLibController.Instance.CallbackScheduler.ScheduleCallback(() => {
-					var newGeyser = newGeysersQueue.Count > 0 ? newGeysersQueue.Dequeue() : null;
-					if (newGeyser != null) {
-						GenSpawn.Spawn(newGeyser, newGeyser.Position, map);
-						AddArrowDrawerFor(newGeyser);
-						AddSteamEffectFor(newGeyser);
-						PlaySteamVentSound(newGeyser);
+				var newGeyser = newGeysersQueue.Count > 0 ? newGeysersQueue.Dequeue() : null;
+				if (newGeyser != null) {
+					GenSpawn.Spawn(newGeyser, newGeyser.Position, map);
+					AddArrowDrawerFor(newGeyser);
+					AddSteamEffectFor(newGeyser);
+					PlaySteamVentSound(newGeyser);
+				}
+				var oldGeyser = oldGeysersQueue.Count > 0 ? oldGeysersQueue.Dequeue() : null;
+				if (newGeyser != null || allowReduction) {
+					if (oldGeyser != null) {
+						Thing.allowDestroyNonDestroyable = true;
+						oldGeyser.Destroy();
+						Thing.allowDestroyNonDestroyable = false;
 					}
-					var oldGeyser = oldGeysersQueue.Count > 0 ? oldGeysersQueue.Dequeue() : null;
-					if (newGeyser != null || allowReduction) {
-						if (oldGeyser != null) {
-							Thing.allowDestroyNonDestroyable = true;
-							oldGeyser.Destroy();
-							Thing.allowDestroyNonDestroyable = false;
-						}
-					} else {
-						AddArrowDrawerFor(oldGeyser);
-					}
-					if (operationIndex >= numSpawnOperations) {
-						RerollInProgress = false;
-					}
-				}, spawnInterval * i);
+				} else {
+					AddArrowDrawerFor(oldGeyser);
+				}
+				if (operationIndex >= numSpawnOperations) {
+					RerollInProgress = false;
+				}
 			}
 		}
 

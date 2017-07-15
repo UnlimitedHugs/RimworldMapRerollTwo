@@ -53,8 +53,9 @@ namespace Reroll2.UI {
 			previewGenerator.OpenPage(0);
 		}
 
-		public override void PostClose() {
+		public override void PreClose() {
 			previewGenerator.Dispose();
+			favoritesProvider.Dispose();
 		}
 
 		private void SetUpTabs() {
@@ -107,8 +108,9 @@ namespace Reroll2.UI {
 				Reroll2Utility.DrawWithGUIColor(GenerateButtonColor, () => {
 					if (Widgets.ButtonText(generateBtnRect, "Reroll2_previews_generateMap".Translate())) {
 						SoundDefOf.Click.PlayOneShotOnCamera();
+						Close();
 						Reroll2Controller.Instance.ExecuteInMainThread(() => {
-							Find.WindowStack.WindowOfType<Dialog_MapPreviews>().Close(false);
+							previewGenerator.WaitForDisposal();
 							RerollToolbox.DoMapReroll(currentZoomedPreview.Seed);
 						});
 					}

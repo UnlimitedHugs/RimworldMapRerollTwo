@@ -5,8 +5,8 @@
 		<defName>RerollSteamVent</defName>
 		<context>MapOnly</context>
 		<eventNames />	
-		<maxVoices>10</maxVoices>   
-		<maxSimultaneous>10</maxSimultaneous>  
+		<maxVoices>4</maxVoices>   
+		<maxSimultaneous>4</maxSimultaneous>  
 		<subSounds>
 			<li>
 				<grains>

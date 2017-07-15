@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Reroll2.UI {
 	public abstract class BasePreviewPageProvider : IDisposable {
-		protected const int PreviewsPerPage = 9;
+		public const int PreviewsPerPage = 9;
 		private const float PreviewSpacing = 10;
 		private const float PageFlipDuration = .5f;
 

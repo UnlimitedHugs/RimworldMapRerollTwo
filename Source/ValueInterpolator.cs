@@ -12,7 +12,7 @@ namespace Reroll2 {
 
 		public float value;
 		public bool finished = true;
-		public bool respectTimeScale = true;
+		public bool respectTimeScale;
 		private float elapsedTime;
 		private float initialValue;
 		private float targetValue;
