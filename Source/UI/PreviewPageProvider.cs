@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using HugsLib.Utils;
 using UnityEngine;
 using Verse;
 
@@ -23,6 +22,14 @@ namespace Reroll2.UI {
 			get { return currentPage; }
 		}
 
+		public int NumPagesAvailable {
+			get { return previews.Count / PreviewsPerPage; }
+		}
+
+		public Widget_MapPreview CurrentZoomedInPreview {
+			get { return overlayPreview != null && overlayPreview.IsFullyZoomedIn ? overlayPreview : null; }
+		}
+
 		public PreviewPageProvider(Map currentMap) {
 			startingMap = currentMap;
 			var mapState = RerollToolbox.GetStateForMap(currentMap);
@@ -40,16 +47,6 @@ namespace Reroll2.UI {
 				currentPage = pageIndex;
 				pageInterpolator.value = 0f;
 				pageInterpolator.StartInterpolation(1f, PageFlipDuration, InterpolationCurves.CubicEaseInOut).SetFinishedCallback(OnPageFlipFinished);
-			}
-		}
-
-		public void NextPage() {
-			OpenPage(currentPage+1);
-		}
-
-		public void PrevPage() {
-			if (currentPage > 0) {
-				OpenPage(currentPage - 1);
 			}
 		}
 
@@ -123,25 +120,22 @@ namespace Reroll2.UI {
 
 		private void EnsureEnoughPreviewsForPage(int page) {
 			while (previews.Count <= MaxIndexOnPage(page)) {
-				previews.Add(CreatePreview(previews.Count));
+				previews.Add(CreatePreview());
 			}
 		}
 
-		private Widget_MapPreview CreatePreview(int index) {
+		private Widget_MapPreview CreatePreview() {
 			lastGeneratedSeed = RerollToolbox.GetNextRerollSeed(lastGeneratedSeed);
 			var promise = previewGenerator.QueuePreviewForSeed(lastGeneratedSeed, startingMap.Tile, startingMap.Size.x);
 			return new Widget_MapPreview(promise, lastGeneratedSeed);
 		}
 
 		private Vector2 GetPreviewPositionFromIndex(int previewIndex) {
-			previewIndex %= PreviewsPerPage;
+			var indexOnPage = previewIndex % PreviewsPerPage;
 			float rowCount = Mathf.Sqrt(PreviewsPerPage);
-			var indexInRow = previewIndex % rowCount;
-			var indexInCol = Mathf.Floor(previewIndex / rowCount);
+			var indexInRow = indexOnPage % rowCount;
+			var indexInCol = Mathf.Floor(indexOnPage / rowCount);
 			return new Vector2(indexInRow / (rowCount - 1f), indexInCol / (rowCount - 1f));
 		}
-
-		/*private Vector2 ScaleDirectionFromRelativePosition() {
-		}*/
 	}
 }

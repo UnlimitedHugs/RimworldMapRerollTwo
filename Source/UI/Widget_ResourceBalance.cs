@@ -50,7 +50,7 @@ namespace Reroll2.UI {
 		private void UpdateInterpolator(Map map) {
 			if (Event.current.type != EventType.Repaint) return;
 			var balance = GetResourceBalance(map);
-			interpolator.UpdateIfUnpaused();
+			interpolator.Update();
 			if (balance != lastSeenBalance) {
 				lastSeenBalance = balance;
 				interpolator.StartInterpolation(balance, InterpolationDuration, InterpolationCurves.CubicEaseInOut);

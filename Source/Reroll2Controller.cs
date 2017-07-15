@@ -3,17 +3,12 @@ using System.Collections.Generic;
 using HugsLib;
 using HugsLib.Settings;
 using HugsLib.Utils;
-using UnityEngine;
 using Verse;
 
 namespace Reroll2 {
 	public class Reroll2Controller : ModBase {
 		internal const float MaxResourceBalance = 100f;
-
-		public enum MapRerollType {
-			Map, Geyser
-		}
-
+		
 		public enum MapGeneratorMode {
 			AccuratePreviews, OriginalGenerator
 		}
@@ -48,7 +43,6 @@ namespace Reroll2 {
 		public SettingHandle<MapGeneratorMode> MapGeneratorModeSetting { get; set; }
 
 		private GeyserRerollTool geyserReroll;
-		private Texture2D mapPreviewTex;
 
 		private Reroll2Controller() {
 			Instance = this;
@@ -85,10 +79,9 @@ namespace Reroll2 {
 				if (PaidRerollsSetting) {
 					// adjust map to current remaining resources and charge for the reroll
 					RerollToolbox.ReduceMapResources(map, 100 - mapState.ResourceBalance, 100);
-					RerollToolbox.SubtractResourcePercentage(map, Resources.Settings.MapRerollSettings.mapRerollCost);
+					
 				}
 			}
-			mapPreviewTex = null;
 		}
 
 		public void RerollGeysers() {
@@ -96,16 +89,6 @@ namespace Reroll2 {
 			if (PaidRerollsSetting) {
 				RerollToolbox.SubtractResourcePercentage(Find.VisibleMap, Resources.Settings.MapRerollSettings.geyserRerollCost);
 			}
-		}
-
-		public bool CanAffordOperation(MapRerollType type) {
-			float cost = 0;
-			switch (type) {
-				case MapRerollType.Map: cost = Resources.Settings.MapRerollSettings.mapRerollCost; break;
-				case MapRerollType.Geyser: cost = Resources.Settings.MapRerollSettings.geyserRerollCost; break;
-			}
-			var mapState = RerollToolbox.GetStateForMap();
-			return !PaidRerollsSetting || mapState.ResourceBalance >= cost;
 		}
 
 		public bool GeyserRerollInProgress {
@@ -123,28 +106,7 @@ namespace Reroll2 {
 		public override void Tick(int currentTick) {
 			if (geyserReroll != null) geyserReroll.OnTick();
 		}
-
-		public override void OnGUI() {
-			if (GUI.Button(new Rect(10, 10, 100, 30), "View this")) {
-				var currentMap = Find.VisibleMap;
-				var state = RerollToolbox.GetStateForMap(currentMap);
-				var seed = state.RerollSeed ?? Find.World.info.seedString;
-				previewGenerator.QueuePreviewForSeed(seed, currentMap.Tile, currentMap.Size.x).Done(t => mapPreviewTex = t);
-			}
-			
-			if (GUI.Button(new Rect(10, 50, 100, 30), "Preview next")) {
-				var currentMap = Find.VisibleMap;
-				var state = RerollToolbox.GetStateForMap(currentMap);
-				var seed = RerollToolbox.GetNextRerollSeed(RerollToolbox.CurrentMapSeed(state));
-				for (int i = 0; i < 9; i++) {
-					previewGenerator.QueuePreviewForSeed(seed+i, currentMap.Tile, currentMap.Size.x).Done(t => mapPreviewTex = t);	
-				}
-			}
-			if (mapPreviewTex != null) {
-				GUI.DrawTexture(new Rect(10, 90, 400, 400), mapPreviewTex, ScaleMode.ScaleToFit, true);
-			}
-		}
-
+		
 		public void RecordUsedMapGenerator(MapGeneratorDef def) {
 			lastUsedMapGenerator = def;
 		}

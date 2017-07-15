@@ -1,5 +1,6 @@
 ﻿using System;
 using RimWorld;
+using RimWorld.Planet;
 using UnityEngine;
 using Verse;
 
@@ -37,18 +38,25 @@ namespace Reroll2.UI {
 
 		public override void DoWindowContents(Rect inRect) {
 			GUILayout.BeginArea(inRect);
+			if (Find.World.renderer.wantedMode != WorldRenderMode.None) {
+				Text.Font = GameFont.Small;
+				GUILayout.Label("Reroll2_visibleMapRequired".Translate());
+				return;
+			}
 			GUILayout.BeginHorizontal();
-			DoRerollTabButton(Resources.Textures.UIRerollMap, "Reroll map", null, () => {
-				if (CanAffordOperation(Reroll2Controller.MapRerollType.Geyser)) {
+			DoRerollTabButton(Resources.Textures.UIRerollMap, Reroll2Utility.WithCostSuffix("Reroll2_rerollMap", PaidOperationType.GeneratePreviews), null, () => {
+				if (CanAffordOperation(PaidOperationType.GeneratePreviews)) {
 					if (Find.VisibleMap != null) {
+						if (RerollToolbox.GetOperationCost(PaidOperationType.GeneratePreviews) > 0) {
+							RerollToolbox.ChargeForOperation(PaidOperationType.GeneratePreviews);
+						}
 						Find.WindowStack.Add(new Dialog_MapPreviews());
-						//Reroll2Controller.Instance.RerollMap();
 					}
 				}
 			});
 			GUILayout.Space(ControlSpacing);
-			DoRerollTabButton(Resources.Textures.UIRerollGeysers, "Reroll geysers", null, () => {
-				if (CanAffordOperation(Reroll2Controller.MapRerollType.Geyser)) {
+			DoRerollTabButton(Resources.Textures.UIRerollGeysers, Reroll2Utility.WithCostSuffix("Reroll2_rerollGeysers", PaidOperationType.RerollGeysers), null, () => {
+				if (CanAffordOperation(PaidOperationType.RerollGeysers)) {
 					if (!Reroll2Controller.Instance.GeyserRerollInProgress) {
 						Reroll2Controller.Instance.RerollGeysers();
 					} else {
@@ -62,8 +70,8 @@ namespace Reroll2.UI {
 			GUILayout.EndArea();
 		}
 
-		private bool CanAffordOperation(Reroll2Controller.MapRerollType rerollType) {
-			if (Reroll2Controller.Instance.CanAffordOperation(rerollType)) {
+		private bool CanAffordOperation(PaidOperationType rerollType) {
+			if (RerollToolbox.CanAffordOperation(rerollType)) {
 				return true;
 			} else {
 				Messages.Message("Reroll2_cannotAfford".Translate(), MessageSound.RejectInput);

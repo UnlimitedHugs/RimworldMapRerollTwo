@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using HugsLib.Utils;
 using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;
@@ -8,6 +9,10 @@ using Verse;
 using Verse.Sound;
 
 namespace Reroll2 {
+	public enum PaidOperationType {
+		GeneratePreviews, RerollGeysers
+	}
+
 	public static class RerollToolbox {
 		private const sbyte ThingMemoryState = -2;
 		private const sbyte ThingDiscardedState = -3;
@@ -51,6 +56,7 @@ namespace Reroll2 {
 				newMapState.PlayerAddedThingIds = oldMapState.PlayerAddedThingIds;
 				newMapState.ResourceBalance = oldMapState.ResourceBalance;
 				newMapState.RerollSeed = mapSeed;
+				newMapState.NumPreviewPagesPurchased = 0;
 
 				SwitchToMap(newMap);
 				if (isOnStartingTile) {
@@ -170,6 +176,35 @@ namespace Reroll2 {
 					ReflectionCache.CreateIncident_IsFinished.SetValue(part, false);
 				}
 			}
+		}
+
+		public static void ChargeForOperation(PaidOperationType type, int desiredPreviewsPage = 0) {
+			var map = Find.VisibleMap;
+			var state = GetStateForMap(map);
+			var cost = GetOperationCost(type, desiredPreviewsPage);
+			if (cost > 0) {
+				SubtractResourcePercentage(map, cost);
+				if (type == PaidOperationType.GeneratePreviews) {
+					state.NumPreviewPagesPurchased = desiredPreviewsPage+1;
+				}
+			}
+		}
+
+		public static bool CanAffordOperation(PaidOperationType type) {
+			return GetOperationCost(type) <= GetStateForMap().ResourceBalance;
+		}
+
+		public static float GetOperationCost(PaidOperationType type, int desiredPreviewsPage = 0) {
+			if (Reroll2Controller.Instance.PaidRerollsSetting) {
+				switch (type) {
+					case PaidOperationType.RerollGeysers: return Resources.Settings.MapRerollSettings.geyserRerollCost;
+					case PaidOperationType.GeneratePreviews:
+						var mapState = GetStateForMap();
+						var numOutstandingPages = Mathf.Max(0, desiredPreviewsPage - (mapState.NumPreviewPagesPurchased - 1));
+						return numOutstandingPages > 0 ? Resources.Settings.MapRerollSettings.previewPageCost * numOutstandingPages : 0;
+				}
+			}
+			return 0;
 		}
 
 		/// <summary>

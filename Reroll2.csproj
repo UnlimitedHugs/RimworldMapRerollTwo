@@ -67,6 +67,7 @@
     <Compile Include="Source\Promises\EnumerableExt.cs" />
     <Compile Include="Source\Promises\IPromise.cs" />
     <Compile Include="Source\Promises\Promise.cs" />
+    <Compile Include="Source\Reroll2Utility.cs" />
     <Compile Include="Source\RerollSettingsDef.cs" />
     <Compile Include="Source\ReflectionCache.cs" />
     <Compile Include="Source\UI\Dialog_MapPreviews.cs" />

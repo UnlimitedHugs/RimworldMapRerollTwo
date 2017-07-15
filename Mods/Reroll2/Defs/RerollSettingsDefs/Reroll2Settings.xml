@@ -3,6 +3,6 @@
 	<Reroll2.RerollSettingsDef>
 		<defName>MapRerollSettings</defName>
 		<geyserRerollCost>1.0</geyserRerollCost>
-		<mapRerollCost>2.0</mapRerollCost>
+		<previewPageCost>2.0</previewPageCost>
 	</Reroll2.RerollSettingsDef>
 </Defs>
