@@ -68,9 +68,9 @@ namespace Reroll2.UI {
 			var contentRect = inRect;
 			const float tabMargin = 45f;
 			contentRect.yMin += tabMargin;
-			var bottomSectionHeight = CloseButSize.y + ElementSpacing;
+			var bottomSectionHeight = CloseButSize.y;
 			var bottomSection = new Rect(inRect.x, inRect.height - bottomSectionHeight, inRect.width, bottomSectionHeight);
-			contentRect.yMax -= bottomSection.height;
+			contentRect.yMax -= bottomSection.height+ ElementSpacing;
 			for (int i = 0; i < tabs.Count; i++) {
 				tabs[i].selected = activeTab == tabs[i];
 			}
@@ -85,10 +85,22 @@ namespace Reroll2.UI {
 			} else if (activeTab == favoritesTab) {
 				DoFavoritesContents(previewsArea, bottomBar);
 			}
-
+			DoStatusReadout(bottomSection);
 			if (Widgets.ButtonText(new Rect(bottomSection.width - CloseButSize.x, bottomSection.yMax - CloseButSize.y, CloseButSize.x, CloseButSize.y), "CloseButton".Translate())) {
 				Close();		
 			}
+		}
+
+		private void DoStatusReadout(Rect inRect) {
+			string status;
+			if (previewGenerator.NumQueuedPreviews > 0) {
+				status = "Reroll2_previews_statusGenerating".Translate(previewGenerator.NumQueuedPreviews, GenText.MarchingEllipsis());
+			} else {
+				status = "Reroll2_previews_statusComplete".Translate(previewGenerator.PreviewCount);
+			}
+			Text.Anchor = TextAnchor.MiddleLeft;
+			Widgets.Label(inRect, status);
+			Text.Anchor = TextAnchor.UpperLeft;
 		}
 
 		private void DoPreviewsContents(Rect previewsArea, Rect bottomBar) {

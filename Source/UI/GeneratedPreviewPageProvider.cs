@@ -5,12 +5,17 @@ namespace Reroll2.UI {
 		private readonly Map startingMap;
 		private MapPreviewGenerator previewGenerator;
 		private string lastGeneratedSeed;
+		private int numQueuedPreviews;
 
 		public GeneratedPreviewPageProvider(Map currentMap) {
 			startingMap = currentMap;
 			var mapState = RerollToolbox.GetStateForMap(currentMap);
 			lastGeneratedSeed = RerollToolbox.CurrentMapSeed(mapState);
 			previewGenerator = new MapPreviewGenerator();
+		}
+
+		public int NumQueuedPreviews {
+			get { return numQueuedPreviews; }
 		}
 
 		public override void OpenPage(int pageIndex) {
@@ -40,6 +45,8 @@ namespace Reroll2.UI {
 		private Widget_MapPreview CreatePreview() {
 			lastGeneratedSeed = RerollToolbox.GetNextRerollSeed(lastGeneratedSeed);
 			var promise = previewGenerator.QueuePreviewForSeed(lastGeneratedSeed, startingMap.Tile, startingMap.Size.x);
+			numQueuedPreviews++;
+			promise.Finally(() => numQueuedPreviews--);
 			return new Widget_MapPreview(promise, lastGeneratedSeed);
 		}
 	}

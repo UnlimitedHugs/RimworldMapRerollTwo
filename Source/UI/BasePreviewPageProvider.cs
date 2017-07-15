@@ -23,6 +23,10 @@ namespace Reroll2.UI {
 			get { return Mathf.CeilToInt(previews.Count / (float)PreviewsPerPage); }
 		}
 
+		public int PreviewCount {
+			get { return previews.Count; }
+		}
+
 		public Widget_MapPreview CurrentZoomedInPreview {
 			get { return overlayPreview != null && overlayPreview.IsFullyZoomedIn ? overlayPreview : null; }
 		}

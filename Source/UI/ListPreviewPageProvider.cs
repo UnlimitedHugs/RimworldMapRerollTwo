@@ -34,7 +34,7 @@ namespace Reroll2.UI {
 		}
 
 		public int Count {
-			get { return previews.Count; }
+			get { return PreviewCount; }
 		}
 
 		public bool IsReadOnly {

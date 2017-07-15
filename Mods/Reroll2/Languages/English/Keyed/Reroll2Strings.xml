@@ -9,11 +9,7 @@
 	<Reroll2_visibleMapRequired>View a map to show reroll controls.</Reroll2_visibleMapRequired>
 	<Reroll2_settledMapRequired>Only settled maps can be rerolled.</Reroll2_settledMapRequired>
 	
-	<Reroll2_previews_costSuffix> ({0}%)</Reroll2_previews_costSuffix>
-	
 	<Reroll2_remainingResources>Remaining map resources</Reroll2_remainingResources>
-	
-	<Reroll2_finishingPreview>Finishing preview</Reroll2_finishingPreview>
 	
 	<Reroll2_previews_previewsTab>Previews</Reroll2_previews_previewsTab>
 	<Reroll2_previews_favoritesTab>Favorites ({0})</Reroll2_previews_favoritesTab>
@@ -22,6 +18,10 @@
 	<Reroll2_previews_generateMap>Generate this map</Reroll2_previews_generateMap>
 	<Reroll2_previews_favoriteCheck>Favorite</Reroll2_previews_favoriteCheck>
 	<Reroll2_previews_zoomOut>Zoom out</Reroll2_previews_zoomOut>
+	<Reroll2_previews_statusGenerating>Generating previews ({0} left) {1}</Reroll2_previews_statusGenerating>
+	<Reroll2_previews_statusComplete>Done: generated {0} previews.</Reroll2_previews_statusComplete>
+	
+	<Reroll2_finishingPreview>Completing preview</Reroll2_finishingPreview>
 	
 	<setting_paidRerolls_label>Rerolls cost resources</setting_paidRerolls_label>
 	<setting_paidRerolls_desc>When enabled, rerolling maps and geysers will cost unmined resources from the map.</setting_paidRerolls_desc>
