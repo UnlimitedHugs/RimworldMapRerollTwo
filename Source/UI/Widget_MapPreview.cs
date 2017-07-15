@@ -91,13 +91,13 @@ namespace Reroll2.UI {
 		public void ZoomOut() {
 			if (!zoomedIn) return;
 			zoomedIn = false;
-			zoomInterpolator.StartInterpolation(0, ZoomInterpolationDuration, InterpolationCurves.Cubic.InOut);
+			zoomInterpolator.StartInterpolation(0, ZoomInterpolationDuration, CurveType.CubicInOut);
 		}
 
 		private void ZoomIn(Rect inRect) {
 			if (zoomedIn || previewTex == null) return;
 			zoomedOutRect = inRect;
-			zoomInterpolator.StartInterpolation(1, ZoomInterpolationDuration, InterpolationCurves.Cubic.InOut).SetFinishedCallback(OnZoomInterpolatorFinished);
+			zoomInterpolator.StartInterpolation(1, ZoomInterpolationDuration, CurveType.CubicInOut).SetFinishedCallback(OnZoomInterpolatorFinished);
 		}
 
 		private Rect LerpRect(Rect a, Rect b, float t) {
@@ -111,7 +111,7 @@ namespace Reroll2.UI {
 		private void OnPromiseResolved(Texture2D tex) {
 			previewTex = tex;
 			spawnInterpolator.value = 0f;
-			spawnInterpolator.StartInterpolation(1f, SpawnInterpolationDuration, InterpolationCurves.Cubic.Out);
+			spawnInterpolator.StartInterpolation(1f, SpawnInterpolationDuration, CurveType.CubicOut);
 		}
 
 		private void DrawOutline(Rect rect) {

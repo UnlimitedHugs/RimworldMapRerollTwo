@@ -29,12 +29,12 @@ namespace Reroll2 {
 			this.value = value;
 		}
 
-		public ValueInterpolator StartInterpolation(float finalValue, float interpolationDuration, InterpolationCurves.Curve interpolationCurve) {
+		public ValueInterpolator StartInterpolation(float finalValue, float interpolationDuration, CurveType curveType) {
 			initialValue = value;
 			elapsedTime = 0;
 			targetValue = finalValue;
 			duration = interpolationDuration;
-			curve = interpolationCurve;
+			curve = InterpolationCurves.AllCurves[curveType];
 			finished = false;
 			return this;
 		}

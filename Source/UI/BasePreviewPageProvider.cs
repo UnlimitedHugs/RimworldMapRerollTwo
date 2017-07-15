@@ -46,7 +46,7 @@ namespace Reroll2.UI {
 				outgoingPage = currentPage;
 				currentPage = pageIndex;
 				pageInterpolator.value = 0f;
-				pageInterpolator.StartInterpolation(1f, PageFlipDuration, InterpolationCurves.Cubic.InOut).SetFinishedCallback(OnPageFlipFinished);
+				pageInterpolator.StartInterpolation(1f, PageFlipDuration, CurveType.CubicInOut).SetFinishedCallback(OnPageFlipFinished);
 			}
 		}
 

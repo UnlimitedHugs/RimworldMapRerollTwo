@@ -1,13 +1,42 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Reroll2 {
+	public enum CurveType {
+		Linear,
+		QuadraticIn, QuadraticOut, QuadraticInOut,
+		CubicIn, CubicOut, CubicInOut,
+		QuarticIn, QuarticOut, QuarticInOut,
+		QuinticIn, QuinticOut, QuinticInOut,
+		SinusoidalIn, SinusoidalOut, SinusoidalInOut,
+		ExponentialIn, ExponentialOut, ExponentialInOut,
+		CircularIn, CircularOut, CircularInOut,
+		ElasticIn, ElasticOut, ElasticInOut,
+		BackIn, BackOut, BackInOut,
+		BounceIn, BounceOut, BounceInOut
+	}
+	
 	/**
 	 * These are functions that describe the change of a value over time. See http://easings.net/ for more info.
 	 * Swiped from https://gist.github.com/Fonserbc/3d31a25e87fdaa541ddf
 	 */
 	public static class InterpolationCurves {
 			public delegate float Curve(float time);
-
+			
+			public static readonly Dictionary<CurveType, Curve> AllCurves = new Dictionary<CurveType, Curve> {
+				{CurveType.Linear, Linear},
+				{CurveType.QuadraticIn, Quadratic.In}, {CurveType.QuadraticOut, Quadratic.Out}, {CurveType.QuadraticInOut, Quadratic.InOut},
+				{CurveType.CubicIn, Cubic.In}, {CurveType.CubicOut, Cubic.Out}, {CurveType.CubicInOut, Cubic.InOut},
+				{CurveType.QuarticIn, Quartic.In}, {CurveType.QuarticOut, Quartic.Out}, {CurveType.QuarticInOut, Quartic.InOut},
+				{CurveType.QuinticIn, Quintic.In}, {CurveType.QuinticOut, Quintic.Out}, {CurveType.QuinticInOut, Quintic.InOut},
+				{CurveType.SinusoidalIn, Sinusoidal.In}, {CurveType.SinusoidalOut, Sinusoidal.Out}, {CurveType.SinusoidalInOut, Sinusoidal.InOut},
+				{CurveType.ExponentialIn, Exponential.In}, {CurveType.ExponentialOut, Exponential.Out}, {CurveType.ExponentialInOut, Exponential.InOut},
+				{CurveType.CircularIn, Circular.In}, {CurveType.CircularOut, Circular.Out}, {CurveType.CircularInOut, Circular.InOut},
+				{CurveType.ElasticIn, Elastic.In}, {CurveType.ElasticOut, Elastic.Out}, {CurveType.ElasticInOut, Elastic.InOut},
+				{CurveType.BackIn, Back.In}, {CurveType.BackOut, Back.Out}, {CurveType.BackInOut, Back.InOut},
+				{CurveType.BounceIn, Bounce.In}, {CurveType.BounceOut, Bounce.Out}, {CurveType.BounceInOut, Bounce.InOut}
+			};
+			
 			public static float Linear(float t) {
 				return t;
 			}

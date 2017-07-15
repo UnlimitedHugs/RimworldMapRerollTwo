@@ -53,7 +53,7 @@ namespace Reroll2.UI {
 			interpolator.Update();
 			if (balance != lastSeenBalance) {
 				lastSeenBalance = balance;
-				interpolator.StartInterpolation(balance, InterpolationDuration, InterpolationCurves.Cubic.InOut);
+				interpolator.StartInterpolation(balance, InterpolationDuration, CurveType.CubicInOut);
 			}
 		}
 	}
