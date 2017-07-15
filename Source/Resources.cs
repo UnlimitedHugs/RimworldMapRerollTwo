@@ -30,6 +30,7 @@ namespace Reroll2 {
 			public static readonly Texture2D ResourceBarEmpty = SolidColorMaterials.NewSolidColorTexture(Color.clear);
 			public static Texture2D UIRerollMap;
 			public static Texture2D UIRerollGeysers;
+			public static Texture2D UIPreviewLoading;
 
 			static Textures() {
 				foreach (var fieldInfo in typeof(Textures).GetFields(HugsLibUtility.AllBindingFlags)) {

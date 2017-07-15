@@ -42,7 +42,7 @@ namespace Reroll2.UI {
 				outgoingPage = currentPage;
 				currentPage = pageIndex;
 				pageInterpolator.value = 0f;
-				pageInterpolator.StartInterpolation(1f, PageFlipDuration, InterpolationCurves.CubicEaseInOut).SetFinishedCallback(OnPageFlipFinished);
+				pageInterpolator.StartInterpolation(1f, PageFlipDuration, InterpolationCurves.Cubic.InOut).SetFinishedCallback(OnPageFlipFinished);
 			}
 		}
 
@@ -92,7 +92,7 @@ namespace Reroll2.UI {
 					inRect.y + (inRect.height - previewSize.y) * previewPosition.y,
 					previewSize.x, previewSize.y);
 				var isInteractive = overlayPreview == null && !PageTransitionInProgress;
-				preview.Draw(previewRect, isInteractive);
+				preview.Draw(previewRect, i, isInteractive);
 				if (preview.WantsOverlayDrawing) {
 					overlayPreview = preview;
 					anyOverlayDrawingRequired = true;

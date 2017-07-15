@@ -35,19 +35,19 @@ namespace Reroll2.UI {
 			this.promise = promise;
 			promise.Done(OnPromiseResolved);
 			this.seed = seed;
-			PrepareInterpolators();
+			PrepareComponents();
 		}
 
 		public Widget_MapPreview(Widget_MapPreview copyFrom) {
 			promise = copyFrom.promise;
 			promise.Done(OnPromiseResolved);
 			seed = copyFrom.seed;
-			PrepareInterpolators();
+			PrepareComponents();
 		}
 
-		private void PrepareInterpolators() {
-			spawnInterpolator = new ValueInterpolator(1);
-			zoomInterpolator = new ValueInterpolator(0);
+		private void PrepareComponents() {
+			spawnInterpolator = new ValueInterpolator();
+			zoomInterpolator = new ValueInterpolator();
 		}
 
 		public void Dispose() {
@@ -55,10 +55,13 @@ namespace Reroll2.UI {
 			previewTex = null;
 		}
 
-		public void Draw(Rect inRect, bool interactive) {
+		public void Draw(Rect inRect, int index, bool interactive) {
 			if (Event.current.type == EventType.Repaint) {
 				spawnInterpolator.Update();
 				zoomInterpolator.Update();
+				if (spawnInterpolator.value < 1) {
+					Widget_RerollPreloader.Draw(inRect.center, index);
+				}
 			}
 			DrawOutline(inRect);
 			if (previewTex != null) {
@@ -88,13 +91,13 @@ namespace Reroll2.UI {
 		public void ZoomOut() {
 			if (!zoomedIn) return;
 			zoomedIn = false;
-			zoomInterpolator.StartInterpolation(0, ZoomInterpolationDuration, InterpolationCurves.CubicEaseInOut);
+			zoomInterpolator.StartInterpolation(0, ZoomInterpolationDuration, InterpolationCurves.Cubic.InOut);
 		}
 
 		private void ZoomIn(Rect inRect) {
 			if (zoomedIn || previewTex == null) return;
 			zoomedOutRect = inRect;
-			zoomInterpolator.StartInterpolation(1, ZoomInterpolationDuration, InterpolationCurves.CubicEaseInOut).SetFinishedCallback(OnZoomInterpolatorFinished);
+			zoomInterpolator.StartInterpolation(1, ZoomInterpolationDuration, InterpolationCurves.Cubic.InOut).SetFinishedCallback(OnZoomInterpolatorFinished);
 		}
 
 		private Rect LerpRect(Rect a, Rect b, float t) {
@@ -108,7 +111,7 @@ namespace Reroll2.UI {
 		private void OnPromiseResolved(Texture2D tex) {
 			previewTex = tex;
 			spawnInterpolator.value = 0f;
-			spawnInterpolator.StartInterpolation(1f, SpawnInterpolationDuration, InterpolationCurves.CubicEaseOut);
+			spawnInterpolator.StartInterpolation(1f, SpawnInterpolationDuration, InterpolationCurves.Cubic.Out);
 		}
 
 		private void DrawOutline(Rect rect) {

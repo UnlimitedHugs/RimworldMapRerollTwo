@@ -76,6 +76,7 @@
     <Compile Include="Source\UI\MainTabWindow_Reroll.cs" />
     <Compile Include="Source\UI\GeneratedPreviewPageProvider.cs" />
     <Compile Include="Source\UI\Widget_MapPreview.cs" />
+    <Compile Include="Source\UI\Widget_RerollPreloader.cs" />
     <Compile Include="Source\UI\Widget_ResourceBalance.cs" />
     <Compile Include="Source\ValueInterpolator.cs" />
     <Compile Include="Source\InterpolationCurves.cs" />

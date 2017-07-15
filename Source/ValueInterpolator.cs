@@ -85,7 +85,7 @@ namespace Reroll2 {
 				finished = true;
 				if (callback != null) callback(this, value, duration, curve);
 			} else {
-				value = curve(elapsedTime, initialValue, targetValue - initialValue, duration);
+				value = initialValue + curve(elapsedTime / duration) * (targetValue - initialValue);
 			}
 			return value;
 		}
